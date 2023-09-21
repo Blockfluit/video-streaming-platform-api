@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: url/of/postgresql/database
+    username:
+    password:
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format-sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+env:
+  videos:
+    root: root/path/of/videos
+  thumbnail:
+    root: root/path/of/thumbnails
+    width: 600
+    height: 900
+  ffprobe:
+    path: path/to/ffprobe
+
