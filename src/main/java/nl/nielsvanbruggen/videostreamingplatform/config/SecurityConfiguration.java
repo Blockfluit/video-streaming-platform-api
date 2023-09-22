@@ -34,6 +34,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/genres").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/genres").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/api/v1/media").hasAuthority(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/media/{id}").hasAuthority(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/media/{id}").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/api/v1/users").hasAuthority(Role.ADMIN.name())
                         .requestMatchers("/api/v1/invite-tokens").hasAuthority(Role.ADMIN.name())
                         .anyRequest().authenticated())

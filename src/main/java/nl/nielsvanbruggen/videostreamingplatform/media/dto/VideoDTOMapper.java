@@ -22,6 +22,7 @@ public class VideoDTOMapper implements Function<Video, VideoDTO> {
                 video.getName(),
                 video.getDuration(),
                 video.getIndex(),
+                video.getSeason(),
                 subtitleRepository.findAllByVideo(video).stream()
                         .map(subtitleDTOMapper)
                         .collect(Collectors.toList())

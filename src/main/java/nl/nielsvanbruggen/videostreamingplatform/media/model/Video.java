@@ -22,6 +22,7 @@ public class Video {
     @Column(name = "_index")
     private int index;
     private double duration;
+    private int season;
     @ManyToOne
     @JoinColumn(name = "media_id")
     private Media media;

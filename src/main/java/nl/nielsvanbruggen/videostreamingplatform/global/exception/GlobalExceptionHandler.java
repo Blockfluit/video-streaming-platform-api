@@ -1,6 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.global.exception;
 
 
+import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException illegalArgumentException) {
         return new ResponseEntity<>(singleMessageToErrorMap(illegalArgumentException.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(InternalException.class)
+    public ResponseEntity<?> handleInternalException(InternalException internalException) {
+        return new ResponseEntity<>(singleMessageToErrorMap(internalException.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     public static Map<String, List<String>> singleMessageToErrorMap(String message) {

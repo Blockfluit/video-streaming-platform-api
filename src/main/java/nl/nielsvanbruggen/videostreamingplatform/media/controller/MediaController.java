@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.ServletResponseMethodArgumentResolver;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,10 +20,39 @@ public class MediaController {
         return new ResponseEntity<>(mediaService.getMedia(id), HttpStatus.OK);
     }
 
-    // TODO: add patch method for updating the media
+    @PostMapping("/{id}/rate")
+    public ResponseEntity<?> postRate(@PathVariable Long id, @Valid @RequestBody RatingPostRequest ratingPostRequest, Authentication authentication) {
+        mediaService.postRating(id, ratingPostRequest, authentication);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/review")
+    public ResponseEntity<?> postReview(@PathVariable Long id, @Valid @RequestBody ReviewPostRequest reviewPostRequest, Authentication authentication) {
+        mediaService.postReview(id, reviewPostRequest, authentication);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}/review")
+    public ResponseEntity<?> patchReview(@PathVariable Long id, @Valid @RequestBody ReviewPatchRequest reviewPatchRequest, Authentication authentication) {
+        mediaService.patchReview(id, reviewPatchRequest, authentication);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
     @PostMapping
     public ResponseEntity<?> postMedia(@Valid @ModelAttribute MediaPostRequest mediaPostRequest) {
-        return mediaService.postMedia(mediaPostRequest);
+        mediaService.postMedia(mediaPostRequest);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> patchMedia(@PathVariable Long id, @ModelAttribute MediaPatchRequest mediaPatchRequest) {
+        mediaService.patchMedia(id, mediaPatchRequest);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteMedia(@PathVariable Long id) {
+        mediaService.deleteMedia(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

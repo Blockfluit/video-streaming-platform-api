@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface SubtitleRepository extends CrudRepository<Subtitle, Long> {
     List<Subtitle> findAllByVideo(Video video);
+    void deleteAllByVideo(Video video);
 }

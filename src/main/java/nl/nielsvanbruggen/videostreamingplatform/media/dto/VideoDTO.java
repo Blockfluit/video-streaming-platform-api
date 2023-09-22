@@ -8,6 +8,7 @@ public record VideoDTO(
         String name,
         double duration,
         int index,
+        int season,
         List<SubtitleDTO> subtitles
 ) {
 

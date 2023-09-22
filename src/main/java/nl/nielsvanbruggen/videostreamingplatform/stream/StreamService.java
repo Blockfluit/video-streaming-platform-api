@@ -28,9 +28,9 @@ public class StreamService {
     @Value("${env.videos.root}")
     private String videosRoot;
     // Allows for storing paths to id in memory. Dramatically reduces the amount of database queries.
-    private final Queue<IdPath> thumbnailPaths = new ArrayDeque<>(100);
-    private final Queue<IdPath> videoPaths = new ArrayDeque<>(100);
-    private final Queue<IdPath> subtitlePaths = new ArrayDeque<>(100);
+    private static final Queue<IdPath> thumbnailPaths = new ArrayDeque<>(100);
+    private static final Queue<IdPath> videoPaths = new ArrayDeque<>(100);
+    private static final Queue<IdPath> subtitlePaths = new ArrayDeque<>(100);
 
     public ResponseEntity<byte[]> getVideo(long id, HttpHeaders headers) {
         String path =  videoPaths.stream()
