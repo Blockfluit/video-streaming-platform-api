@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface RatingRepository extends JpaRepository<Rating, RatingId> {
     List<Rating> findAllByMedia(Media media);
+    List<Rating> deleteByMedia(Media media);
 }

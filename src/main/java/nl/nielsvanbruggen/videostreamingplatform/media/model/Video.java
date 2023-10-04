@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class Video {
     private int index;
     private double duration;
     private int season;
+    private String snapshot;
     @ManyToOne
     @JoinColumn(name = "media_id")
     private Media media;

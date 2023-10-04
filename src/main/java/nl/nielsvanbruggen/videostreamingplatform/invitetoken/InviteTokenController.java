@@ -28,14 +28,15 @@ public class InviteTokenController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createToken(@RequestBody InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
-        return ResponseEntity.ok(inviteTokenService.createInviteToken(inviteTokenPostRequest, authentication));
+    public ResponseEntity<?> createInviteToken(@RequestBody InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
+        inviteTokenService.createInviteToken(inviteTokenPostRequest, authentication);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping
-    public ResponseEntity<?> deleteToken(@Valid @RequestBody InviteTokenDeleteRequest inviteTokenDeleteRequest) {
+    @DeleteMapping("/{token}")
+    public ResponseEntity<?> deleteInviteToken(@PathVariable String token) {
         try {
-            inviteTokenService.deleteInviteToken(inviteTokenDeleteRequest);
+            inviteTokenService.deleteInviteToken(token);
             return ResponseEntity.ok().build();
         } catch(InvalidTokenException ex) {
             return new ResponseEntity<>(GlobalExceptionHandler.singleMessageToErrorMap(ex.getMessage()), HttpStatus.NOT_FOUND);

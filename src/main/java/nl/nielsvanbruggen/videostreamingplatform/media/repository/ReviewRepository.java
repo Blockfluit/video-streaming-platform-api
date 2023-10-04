@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findAllByMedia(Media media);
+    List<Review> deleteByMedia(Media media);
 }

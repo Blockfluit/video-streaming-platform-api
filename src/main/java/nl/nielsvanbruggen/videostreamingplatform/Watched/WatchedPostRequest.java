@@ -6,8 +6,7 @@ import lombok.Data;
 
 @Data
 public class WatchedPostRequest {
-    @NotBlank
-    long id;
+    Long id;
     @NotNull
     Float timestamp;
 }

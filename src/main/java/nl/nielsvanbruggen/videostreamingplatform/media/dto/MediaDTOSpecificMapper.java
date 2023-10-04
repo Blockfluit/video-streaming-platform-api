@@ -1,6 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.Watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.repository.MediaActorRepository;
@@ -25,6 +26,7 @@ public class MediaDTOSpecificMapper implements Function<Media, MediaDTOSpecific>
     private final ActorDTOMapper actorDTOMapper;
     private final VideoDTOMapper videoDTOMapper;
     private final ReviewRepository reviewRepository;
+    private final WatchedRepository watchedRepository;
 
     @Override
     public MediaDTOSpecific apply(Media media) {
@@ -53,6 +55,7 @@ public class MediaDTOSpecificMapper implements Function<Media, MediaDTOSpecific>
                         .average()
                         .orElse(-1))
                 .reviews(reviewRepository.findAllByMedia(media))
+                .views(watchedRepository.totalUniqueViewsByMedia(media))
                 .build();
     }
 }

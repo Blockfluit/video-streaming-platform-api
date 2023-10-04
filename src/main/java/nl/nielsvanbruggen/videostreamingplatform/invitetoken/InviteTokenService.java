@@ -19,7 +19,7 @@ public class InviteTokenService {
     private final UserRepository userRepository;
     private final InviteTokenDTOMapper inviteTokenDTOMapper;
 
-    public InviteTokenDTO createInviteToken(InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
+    public void createInviteToken(InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
         if(inviteTokenPostRequest.getExpiration() == null ||
                 inviteTokenPostRequest.getExpiration().isBefore(Instant.now())) {
             throw new IllegalArgumentException();
@@ -40,16 +40,13 @@ public class InviteTokenService {
                 .createdAt(Instant.now())
                 .build();
         inviteTokenRepository.save(token);
-        return inviteTokenDTOMapper.apply(token);
     }
 
-    public void deleteInviteToken(InviteTokenDeleteRequest inviteTokenDeleteRequest) {
-        inviteTokenRepository.findById(inviteTokenDeleteRequest.getToken())
+    public void deleteInviteToken(String token) {
+        inviteTokenRepository.findById(token)
             .ifPresentOrElse(
                     (inviteTokenRepository::delete),
-                    () -> {
-                        throw new InvalidTokenException();
-                    }
+                    () -> {throw new InvalidTokenException();}
             );
     }
 }

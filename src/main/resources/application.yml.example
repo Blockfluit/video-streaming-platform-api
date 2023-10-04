@@ -13,6 +13,9 @@ spring:
         format-sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      max-file-size: 10MB
 env:
   videos:
     root: root/path/of/videos
@@ -20,6 +23,10 @@ env:
     root: root/path/of/thumbnails
     width: 600
     height: 900
+  snapshot:
+    root: root/path/of/snapshots
   ffprobe:
+    path: path/to/ffprobe
+  ffmpeg:
     path: path/to/ffprobe
 

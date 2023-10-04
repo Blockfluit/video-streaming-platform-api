@@ -14,17 +14,22 @@ public class StreamController {
     private final StreamService streamService;
 
     @GetMapping("/video/{id}")
-    public ResponseEntity<?> getVideo(@PathVariable @NotBlank long id, @RequestHeader HttpHeaders headers) {
+    public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestHeader HttpHeaders headers) {
         return streamService.getVideo(id, headers);
     }
 
     @GetMapping("/subtitle/{id}")
-    public ResponseEntity<?> getSubtitle(@PathVariable @NotBlank long id, @RequestHeader HttpHeaders headers) {
+    public ResponseEntity<?> getSubtitle(@PathVariable Long id, @RequestHeader HttpHeaders headers) {
         return streamService.getSubtitle(id, headers);
     }
 
     @GetMapping("/thumbnail/{id}")
-    public ResponseEntity<?> getThumbnail(@PathVariable @NotBlank long id, @RequestHeader HttpHeaders headers) {
+    public ResponseEntity<?> getThumbnail(@PathVariable Long id, @RequestHeader HttpHeaders headers) {
         return streamService.getThumbnail(id, headers);
+    }
+
+    @GetMapping("/snapshot/{id}")
+    public ResponseEntity<?> getSnapshot(@PathVariable Long id, @RequestHeader HttpHeaders headers) {
+        return streamService.getSnapshot(id, headers);
     }
 }

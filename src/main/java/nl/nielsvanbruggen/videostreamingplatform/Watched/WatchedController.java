@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/watched")
 @RequiredArgsConstructor
 public class WatchedController {
-    private WatchedService watchedService;
+    private final WatchedService watchedService;
 
     @GetMapping
     public ResponseEntity<?> getWatched(Authentication authentication) {

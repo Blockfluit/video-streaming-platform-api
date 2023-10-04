@@ -22,9 +22,9 @@ public class PasswordResetController {
     }
 
     @PatchMapping
-    public ResponseEntity<?> changePassword(@RequestParam("token") @NotBlank String token, @Valid @RequestBody PasswordResetPatchRequest passwordResetPatchRequest) {
+    public ResponseEntity<?> changePassword(@RequestParam(required = false) String token, @Valid @RequestBody PasswordResetPatchRequest passwordResetPatchRequest) {
         try {
-            passwordResetService.changePassword(token, passwordResetPatchRequest);
+            passwordResetService.changePassword(passwordResetPatchRequest, token);
             return ResponseEntity.ok().build();
         } catch (InvalidTokenException ex) {
             return new ResponseEntity<>(GlobalExceptionHandler.singleMessageToErrorMap(ex.getMessage()), HttpStatus.BAD_REQUEST);

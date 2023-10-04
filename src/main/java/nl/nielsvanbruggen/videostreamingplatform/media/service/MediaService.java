@@ -1,7 +1,10 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.service;
 
 import com.sun.jdi.InternalException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.Watched.Watched;
+import nl.nielsvanbruggen.videostreamingplatform.Watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.repository.ActorRepository;
@@ -16,6 +19,7 @@ import nl.nielsvanbruggen.videostreamingplatform.media.dto.*;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Review;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.*;
 import nl.nielsvanbruggen.videostreamingplatform.global.service.ImageService;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
@@ -25,6 +29,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -36,12 +41,15 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MediaService {
+    private final VideoRepository videoRepository;
     private final RatingRepository ratingRepository;
     private final UserRepository userRepository;
     private final MediaRepository mediaRepository;
     private final GenreRepository genreRepository;
     private final ActorRepository actorRepository;
     private final ReviewRepository reviewRepository;
+    private final WatchedRepository watchedRepository;
+    private final SubtitleRepository subtitleRepository;
     private final MediaGenreRepository mediaGenreRepository;
     private final MediaActorRepository mediaActorRepository;
     private final MediaDTOGeneralMapper mediaDTOGeneralMapper;
@@ -54,7 +62,12 @@ public class MediaService {
     private String ffprobePath;
     private static List<MediaDTOGeneral> allMedia = new ArrayList<>();
 
-    public List<?> getMedia(Long id) {
+    public List<?> getMedia(Long id, Authentication authentication) {
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.setLastActiveAt(Instant.now());
+        userRepository.save(user);
+
         if(id != null) {
             return List.of(mediaRepository.findById(id)
                     .map(mediaDTOSpecificMapper)
@@ -164,7 +177,11 @@ public class MediaService {
         }
 
         if(request.isUpdateFiles()) {
-            videoService.updateVideos(media);
+            try {
+                videoService.updateVideos(media);
+            } catch (IOException ex) {
+                throw new InternalException(ex.getMessage());
+            }
         }
 
         mediaRepository.save(media);
@@ -212,17 +229,34 @@ public class MediaService {
                 .build();
 
         mediaRepository.save(media);
-        videoService.updateVideos(media);
+        try {
+            videoService.updateVideos(media);
+        } catch (IOException ex) {
+            mediaRepository.delete(media);
+          throw new InternalException(ex.getMessage());
+        }
         genres.forEach(genre -> mediaGenreRepository.save(new MediaGenre(media, genre)));
         actors.forEach(actor -> mediaActorRepository.save(new MediaActor(media, actor)));
         updateAllMedia();
     }
 
+    @Transactional
     public void deleteMedia(Long id) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
 
+        List<Video> videos = videoRepository.findAllByMedia(media);
+
+        watchedRepository.deleteByVideoIn(videos);
+        subtitleRepository.deleteByVideoIn(videos);
+        ratingRepository.deleteByMedia(media);
+        reviewRepository.deleteByMedia(media);
+        mediaGenreRepository.deleteByMedia(media);
+        mediaActorRepository.deleteByMedia(media);
+
+        videoRepository.deleteAll(videos);
         mediaRepository.delete(media);
+        updateAllMedia();
     }
 
     public void updateAllMedia() {

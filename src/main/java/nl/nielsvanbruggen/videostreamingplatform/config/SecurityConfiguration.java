@@ -9,9 +9,12 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
@@ -19,23 +22,26 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfiguration {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final CorsConfigurationSource configurationSource;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(configurer -> configurer.configurationSource(configurationSource))
                 .authorizeHttpRequests(customizer -> customizer
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/change-password").permitAll()
                         .requestMatchers("/api/v1/stream/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/request").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/tickets").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/api/v1/actors").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/actors").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/api/v1/genres").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/genres").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/api/v1/media").hasAuthority(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/media/{id}").hasAuthority(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/media/{id}").hasAuthority(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/media/*").hasAuthority(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/media/*").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/api/v1/users").hasAuthority(Role.ADMIN.name())
                         .requestMatchers("/api/v1/invite-tokens").hasAuthority(Role.ADMIN.name())
                         .anyRequest().authenticated())

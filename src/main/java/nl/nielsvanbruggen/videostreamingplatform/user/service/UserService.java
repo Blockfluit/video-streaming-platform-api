@@ -18,25 +18,20 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public void patchUser(UserPatchRequest request, Authentication authentication) {
-        final String username = request.getUsername();
         final boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()));
-        if(!authentication.getName().equals(username) &&
+
+        User user =  userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+
+        if(!authentication.getName().equals(user.getUsername()) &&
                 !isAdmin) {
             throw new IllegalArgumentException("Insufficient permission.");
         }
-        User user =  userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
 
         if(request.getRole() != null &&
-                isAdmin) {
-            user.setRole(request.getRole());
-        }
-        if(request.getEmail() != null) {
-            user.setEmail(request.getEmail());
-        }
-        if(request.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
+                isAdmin) user.setRole(request.getRole());
+        if(request.getEmail() != null) user.setEmail(request.getEmail());
+        if(request.getPassword() != null) user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
     }

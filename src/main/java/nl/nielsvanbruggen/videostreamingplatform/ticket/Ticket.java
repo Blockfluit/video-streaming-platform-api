@@ -19,10 +19,12 @@ public class Ticket {
     @GeneratedValue
     private long id;
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String comment;
     @Enumerated(EnumType.STRING)
     private Type type;
     private boolean resolved;
+    @Column(columnDefinition = "TEXT")
     private String response;
     @Column(name = "created_at")
     private Instant createdAt;

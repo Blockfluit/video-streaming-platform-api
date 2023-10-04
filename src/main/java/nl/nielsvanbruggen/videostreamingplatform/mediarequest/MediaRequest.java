@@ -26,9 +26,9 @@ public class MediaRequest {
     private String comment;
     private Status status;
     @Column(name = "created_at")
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
     @Column(name = "updated_at")
-    private Instant updatedAt = Instant.now();
+    private Instant updatedAt;
     @Column(name = "created_by")
     private User createdBy;
 }

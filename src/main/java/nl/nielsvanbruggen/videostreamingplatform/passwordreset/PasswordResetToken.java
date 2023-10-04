@@ -17,12 +17,9 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 public class PasswordResetToken {
-    @Id
     private String token;
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
     private Instant expiration;
-    @ManyToOne
     private User user;
 }

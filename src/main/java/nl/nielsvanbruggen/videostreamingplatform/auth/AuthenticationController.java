@@ -18,9 +18,9 @@ public class AuthenticationController {
     private final AuthenticationService service;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestParam(name = "token", required = false) String token, @Valid @RequestBody RegisterRequest request, Authentication authentication) {
+    public ResponseEntity<?> register(@RequestParam(required = false) String token, @Valid @RequestBody RegisterRequest registerRequest, Authentication authentication) {
         try {
-            return ResponseEntity.ok(service.register(token, request, authentication));
+            return ResponseEntity.ok(service.register(registerRequest, token, authentication));
         } catch (MissingInviteTokenException ex) {
             return new ResponseEntity<>(GlobalExceptionHandler.singleMessageToErrorMap(ex.getMessage()), HttpStatus.BAD_REQUEST);
         } catch(InvalidTokenException ex) {

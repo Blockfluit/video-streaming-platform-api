@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    public AuthenticationResponse register(String token, RegisterRequest request, Authentication authentication) {
+    public AuthenticationResponse register(RegisterRequest request, String token, Authentication authentication) {
         if(userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new AlreadyInUseException("Username already in use.");
         }
@@ -40,10 +41,6 @@ public class AuthenticationService {
         Map<String, Object> extraClaims = new HashMap<>();
 
         if(authentication == null) {
-            if(token == null) {
-                throw new MissingInviteTokenException();
-            }
-
             inviteTokenRepository.findById(token)
                 .ifPresentOrElse(
                         (inviteToken) -> {
@@ -81,6 +78,8 @@ public class AuthenticationService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
 
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("role", user.getRole());

@@ -14,6 +14,9 @@ import org.springframework.util.MultiValueMap;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Service
@@ -25,12 +28,15 @@ public class StreamService {
     private final SubtitleRepository subtitleRepository;
     @Value("${env.thumbnail.root}")
     private String thumbnailRoot;
+    @Value("${env.snapshot.root}")
+    private String snapshotRoot;
     @Value("${env.videos.root}")
     private String videosRoot;
     // Allows for storing paths to id in memory. Dramatically reduces the amount of database queries.
-    private static final Queue<IdPath> thumbnailPaths = new ArrayDeque<>(100);
-    private static final Queue<IdPath> videoPaths = new ArrayDeque<>(100);
-    private static final Queue<IdPath> subtitlePaths = new ArrayDeque<>(100);
+    private static final Queue<IdPath> thumbnailPaths = new ArrayDeque<>(1000);
+    private static final Queue<IdPath> snapshotPaths = new ArrayDeque<>(3000);
+    private static final Queue<IdPath> videoPaths = new ArrayDeque<>(300);
+    private static final Queue<IdPath> subtitlePaths = new ArrayDeque<>(300);
 
     public ResponseEntity<byte[]> getVideo(long id, HttpHeaders headers) {
         String path =  videoPaths.stream()
@@ -79,6 +85,23 @@ public class StreamService {
                     return idPath.getPath();
                 });
         String absolutePath = thumbnailRoot + "/" + path;
+
+        return createStreamResponseEntity(absolutePath, headers);
+    }
+
+    public ResponseEntity<byte[]> getSnapshot(long id, HttpHeaders headers) {
+        String path = snapshotPaths.stream()
+                .filter(entry -> entry.getId() == id)
+                .findFirst()
+                .map(IdPath::getPath)
+                .orElseGet(() -> {
+                    String relativePath = videoRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Media id does not exist.")).getSnapshot();
+                    IdPath idPath = new IdPath(id, relativePath);
+                    snapshotPaths.add(idPath);
+                    return idPath.getPath();
+                });
+        String absolutePath = snapshotRoot + "/" + path;
 
         return createStreamResponseEntity(absolutePath, headers);
     }

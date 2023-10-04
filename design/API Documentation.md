@@ -41,6 +41,16 @@
 > |id|optional|integer|id of media|
 </details>
 <details>
+    <summary><code>POST</code> <code>/</code> <code>{id}</code> <code>/</code> <code>rate</code></summary>
+</details>
+<details>
+    <summary><code>POST</code> <code>/</code> <code>{id}</code> <code>/</code> <code>review</code></summary>
+</details>
+<details>
+    <summary><code>PATCH</code> <code>/</code> <code>{id}</code> <code>/</code> <code>review</code></summary>
+</details>
+
+<details>
     <summary><code>POST</code></summary>
 
 ##### Form-data Parameters
@@ -54,9 +64,9 @@
 > |actors|optional|text|comma separated. ids of actors not there name|
 </details>
 <details>
-    <summary><code>PATCH</code></summary>
+    <summary><code>PATCH</code> <code>/</code> <code>{id}</code> </summary>
 
-##### Body Parameters
+##### Form-data Parameters
 > |name|type|data type|description|
 > |-|-|-|-|
 > |id|required|integer|-|
@@ -68,7 +78,7 @@
 > |actors|optional|text|-|
 </details>
 <details>
-    <summary><code>DELETE</code></summary>
+    <summary><code>DELETE</code> <code>/</code> <code>{id}</code> </summary>
 
 ##### Body Parameters
 > |name|type|data type|description|

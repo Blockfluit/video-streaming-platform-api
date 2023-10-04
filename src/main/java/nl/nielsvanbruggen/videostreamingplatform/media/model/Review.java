@@ -18,6 +18,7 @@ public class Review {
     @Id
     @GeneratedValue
     private long id;
+    @Column(columnDefinition = "TEXT")
     private String comment;
     @ManyToOne
     @JoinColumn(name = "user_id")

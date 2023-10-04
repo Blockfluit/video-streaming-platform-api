@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.ServletResponseMethodArgumentResolver;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,8 +15,8 @@ public class MediaController {
     private final MediaService mediaService;
 
     @GetMapping({"/", "/{id}"})
-    public ResponseEntity<?> getMedia(@PathVariable(required = false) Long id) {
-        return new ResponseEntity<>(mediaService.getMedia(id), HttpStatus.OK);
+    public ResponseEntity<?> getMedia(@PathVariable(required = false) Long id, Authentication authentication) {
+        return new ResponseEntity<>(mediaService.getMedia(id, authentication), HttpStatus.OK);
     }
 
     @PostMapping("/{id}/rate")

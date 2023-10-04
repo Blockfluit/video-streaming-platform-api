@@ -25,6 +25,7 @@ public class Media {
     private Instant updatedAt;
     private String thumbnail;
     private String trailer;
+    @Column(columnDefinition = "TEXT")
     private String plot;
     private int year;
     @Enumerated(EnumType.STRING)
