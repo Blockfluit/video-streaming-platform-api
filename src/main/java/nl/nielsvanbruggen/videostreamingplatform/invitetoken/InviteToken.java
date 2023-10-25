@@ -19,6 +19,9 @@ public class InviteToken {
     @Id
     private String token;
     private Instant expiration;
+    @Column(name = "used")
+    private boolean used;
+    private boolean master;
     @Column(name = "created_at")
     private Instant createdAt;
     @Enumerated(EnumType.STRING)

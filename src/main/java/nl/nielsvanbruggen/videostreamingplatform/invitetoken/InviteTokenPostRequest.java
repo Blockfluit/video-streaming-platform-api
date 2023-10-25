@@ -9,4 +9,5 @@ import java.time.Instant;
 public class InviteTokenPostRequest {
     private Instant expiration;
     private Role role;
+    private boolean master;
 }

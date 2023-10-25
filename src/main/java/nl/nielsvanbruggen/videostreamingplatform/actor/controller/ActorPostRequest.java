@@ -7,6 +7,5 @@ import lombok.Data;
 public class ActorPostRequest {
     @NotBlank(message = "Firstname missing.")
     String firstname;
-    @NotBlank(message = "Lastname missing.")
     String lastname;
 }

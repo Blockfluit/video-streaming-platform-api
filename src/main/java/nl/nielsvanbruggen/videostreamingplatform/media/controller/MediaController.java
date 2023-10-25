@@ -31,9 +31,15 @@ public class MediaController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PatchMapping("/{id}/review")
+    @PutMapping("/{id}/review")
     public ResponseEntity<?> patchReview(@PathVariable Long id, @Valid @RequestBody ReviewPatchRequest reviewPatchRequest, Authentication authentication) {
         mediaService.patchReview(id, reviewPatchRequest, authentication);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}/review")
+    public ResponseEntity<?> deleteReview(@PathVariable Long id, @Valid @RequestBody ReviewDeleteRequest reviewDeleteRequest, Authentication authentication) {
+        mediaService.deleteReview(id, reviewDeleteRequest, authentication);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

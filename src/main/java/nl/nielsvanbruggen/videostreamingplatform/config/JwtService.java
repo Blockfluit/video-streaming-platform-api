@@ -16,7 +16,6 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-
     private static final String SECRET_KEY = "88bcc6f36e6bafc8e75f2a57ccc9b7210a2c839a452fab61e92d1d3cbc9dfc56";
     private static final int EXPIRATION_TIME_MILLIS = 1000 * 60 * 60 * 24 * 7;
 

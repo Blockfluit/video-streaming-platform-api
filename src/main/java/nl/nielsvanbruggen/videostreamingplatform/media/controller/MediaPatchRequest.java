@@ -1,6 +1,8 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.controller;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.IdIndex;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,5 +17,6 @@ public class MediaPatchRequest {
     private Integer year;
     private Type type;
     private String plot;
+    private List<IdIndex> order;
     private boolean updateFiles;
 }

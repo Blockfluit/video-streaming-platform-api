@@ -1,9 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.actor.repository;
 
-import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.id.MediaActorId;
-import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import org.springframework.data.jpa.repository.JpaRepository;
 

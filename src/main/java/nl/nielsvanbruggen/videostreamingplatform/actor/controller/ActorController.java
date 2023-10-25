@@ -1,6 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.actor.controller;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.service.ActorService;
@@ -22,13 +23,13 @@ public class ActorController {
     }
 
     @PostMapping
-    public ResponseEntity<String> postActor(@RequestBody ActorPostRequest actorPostRequest) {
+    public ResponseEntity<String> postActor(@RequestBody @Valid ActorPostRequest actorPostRequest) {
         actorService.postActor(actorPostRequest);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping
-    public ResponseEntity<String> deleteActor(@RequestBody long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteActor(@PathVariable Long id) {
         actorService.deleteActor(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }

@@ -7,8 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 

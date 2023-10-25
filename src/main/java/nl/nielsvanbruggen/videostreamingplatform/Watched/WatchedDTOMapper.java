@@ -11,6 +11,7 @@ public class WatchedDTOMapper implements Function<Watched, WatchedDTO> {
         return new WatchedDTO(
                 watched.getVideo().getId(),
                 watched.getVideo().getName(),
+                watched.getVideo().getIndex(),
                 watched.getVideo().getSeason(),
                 watched.getTimestamp(),
                 watched.getVideo().getMedia().getId(),

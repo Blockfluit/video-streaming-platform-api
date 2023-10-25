@@ -11,6 +11,8 @@ public class InviteTokenDTOMapper implements Function<InviteToken, InviteTokenDT
         return new InviteTokenDTO(
                 inviteToken.getToken(),
                 inviteToken.getExpiration(),
+                inviteToken.isUsed(),
+                inviteToken.isMaster(),
                 inviteToken.getCreatedAt(),
                 inviteToken.getRole(),
                 inviteToken.getCreatedBy().getUsername());

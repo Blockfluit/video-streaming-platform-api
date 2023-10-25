@@ -25,9 +25,9 @@ public class GenreController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping
-    public ResponseEntity<String> deleteGenre(@Valid @RequestBody GenreRequest genreRequest) {
-        genreService.deleteGenre(genreRequest);
+    @DeleteMapping("/{genre}")
+    public ResponseEntity<String> deleteGenre(@PathVariable String genre) {
+        genreService.deleteGenre(genre);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }

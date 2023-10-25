@@ -14,10 +14,9 @@ import org.springframework.util.MultiValueMap;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Service
 @RequiredArgsConstructor
@@ -33,10 +32,10 @@ public class StreamService {
     @Value("${env.videos.root}")
     private String videosRoot;
     // Allows for storing paths to id in memory. Dramatically reduces the amount of database queries.
-    private static final Queue<IdPath> thumbnailPaths = new ArrayDeque<>(1000);
-    private static final Queue<IdPath> snapshotPaths = new ArrayDeque<>(3000);
-    private static final Queue<IdPath> videoPaths = new ArrayDeque<>(300);
-    private static final Queue<IdPath> subtitlePaths = new ArrayDeque<>(300);
+    private static final ConcurrentLinkedQueue<IdPath> thumbnailPaths = new ConcurrentLinkedQueue<>();
+    private static final ConcurrentLinkedQueue<IdPath> snapshotPaths = new ConcurrentLinkedQueue<>();
+    private static final ConcurrentLinkedQueue<IdPath> videoPaths = new ConcurrentLinkedQueue<>();
+    private static final ConcurrentLinkedQueue<IdPath> subtitlePaths = new ConcurrentLinkedQueue<>();
 
     public ResponseEntity<byte[]> getVideo(long id, HttpHeaders headers) {
         String path =  videoPaths.stream()
@@ -47,6 +46,7 @@ public class StreamService {
                     String relativePath = videoRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("Video id does not exist.")).getPath();
                     IdPath idPath = new IdPath(id, relativePath);
+                    if(videoPaths.size() < 1000) videoPaths.poll();
                     videoPaths.add(idPath);
                     return idPath.getPath();
                 });
@@ -64,6 +64,7 @@ public class StreamService {
                     String relativePath = subtitleRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("Subtitle id does not exist.")).getPath();
                     IdPath idPath = new IdPath(id, relativePath);
+                    if(subtitlePaths.size() < 300) subtitlePaths.poll();
                     subtitlePaths.add(idPath);
                     return idPath.getPath();
                 });
@@ -81,6 +82,7 @@ public class StreamService {
                     String relativePath = mediaRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("Media id does not exist.")).getThumbnail();
                     IdPath idPath = new IdPath(id, relativePath);
+                    if(thumbnailPaths.size() < 2000) thumbnailPaths.poll();
                     thumbnailPaths.add(idPath);
                     return idPath.getPath();
                 });
@@ -96,8 +98,10 @@ public class StreamService {
                 .map(IdPath::getPath)
                 .orElseGet(() -> {
                     String relativePath = videoRepository.findById(id)
-                            .orElseThrow(() -> new IllegalArgumentException("Media id does not exist.")).getSnapshot();
+                            .orElseThrow(() -> new IllegalArgumentException("Video id does not exist."))
+                            .getSnapshot();
                     IdPath idPath = new IdPath(id, relativePath);
+                    if(snapshotPaths.size() < 4000) snapshotPaths.poll();
                     snapshotPaths.add(idPath);
                     return idPath.getPath();
                 });

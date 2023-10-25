@@ -35,9 +35,9 @@ public class ImageService {
         final int width = Integer.parseInt(imageWidth);
         final int height = Integer.parseInt(imageHeight);
         final BufferedImage convertedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        final int off = (convertedImage.getWidth() - width) / 2;
         Image img = bufferedImage.getScaledInstance(-1, height, Image.SCALE_DEFAULT);
-        convertedImage.createGraphics().drawImage(img, 0, 0, Color.WHITE,null);
+        final int off = (img.getWidth(null) - width) / 2;
+        convertedImage.createGraphics().drawImage(img, -off, 0, Color.WHITE,null);
 
         return convertedImage;
     }

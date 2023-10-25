@@ -3,7 +3,6 @@ package nl.nielsvanbruggen.videostreamingplatform.media.service;
 import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.Watched.Watched;
 import nl.nielsvanbruggen.videostreamingplatform.Watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
@@ -13,15 +12,17 @@ import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.GenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
-import nl.nielsvanbruggen.videostreamingplatform.global.service.VideoService;
 import nl.nielsvanbruggen.videostreamingplatform.media.controller.*;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.*;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOGeneral;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOGeneralMapper;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSpecificMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
+import nl.nielsvanbruggen.videostreamingplatform.global.service.VideoService;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Review;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.*;
 import nl.nielsvanbruggen.videostreamingplatform.global.service.ImageService;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.*;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
@@ -111,6 +112,7 @@ public class MediaService {
 
         Review review = Review.builder()
                 .media(media)
+                .title(request.getTitle())
                 .comment(request.getComment())
                 .user(user)
                 .updatedAt(Instant.now())
@@ -140,9 +142,26 @@ public class MediaService {
             throw new IllegalArgumentException("Insufficient permission");
         }
         review.setUpdatedAt(Instant.now());
+        review.setTitle(request.getTitle());
         review.setComment(request.getComment());
 
         reviewRepository.save(review);
+        updateAllMedia();
+    }
+
+    public void deleteReview(Long id, ReviewDeleteRequest request, Authentication authentication) {
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+
+        Review review = reviewRepository.findById(request.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Review does not exist"));
+
+        if(!user.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name())) &&
+                !review.getUser().equals(user)) {
+            throw new IllegalArgumentException("Insufficient permission");
+        }
+
+        reviewRepository.delete(review);
         updateAllMedia();
     }
 
@@ -174,6 +193,14 @@ public class MediaService {
             } catch (IOException ex) {
                 throw new InternalException("Saving thumbnail went wrong.");
             }
+        }
+        if(request.getOrder() != null) {
+            request.getOrder().forEach(entry -> {
+                Video video = videoRepository.findById(entry.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Video does not exist."));
+                video.setIndex(entry.getIndex());
+                videoRepository.save(video);
+            });
         }
 
         if(request.isUpdateFiles()) {

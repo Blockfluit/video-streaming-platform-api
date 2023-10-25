@@ -18,8 +18,8 @@ public class GenreService {
        genreRepository.save(new Genre(genreRequest.getGenre()));
     }
 
-    public void deleteGenre(GenreRequest genreRequest) {
-        Genre tempGenre = genreRepository.findById(genreRequest.getGenre())
+    public void deleteGenre(String genre) {
+        Genre tempGenre = genreRepository.findById(genre)
                 .orElseThrow(() -> new IllegalArgumentException("Genre does not exist."));
         genreRepository.delete(tempGenre);
     }

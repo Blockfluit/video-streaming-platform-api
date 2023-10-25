@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.config.JwtService;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.AlreadyInUseException;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
-import nl.nielsvanbruggen.videostreamingplatform.invitetoken.exception.MissingInviteTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.invitetoken.InviteTokenRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
@@ -34,7 +33,8 @@ public class AuthenticationService {
         if(userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new AlreadyInUseException("Username already in use.");
         }
-        if(userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if(request.getEmail() != null &&
+                userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new AlreadyInUseException("Email already in use.");
         }
 
@@ -44,11 +44,22 @@ public class AuthenticationService {
             inviteTokenRepository.findById(token)
                 .ifPresentOrElse(
                         (inviteToken) -> {
+                            if(inviteToken.isUsed() &&
+                                    !inviteToken.isMaster()) {
+                                throw new InvalidTokenException("Token already used.");
+                            }
+
+                            if(inviteToken.getExpiration().isBefore(Instant.now())) {
+                                throw new InvalidTokenException("Token expired.");
+                            }
+
                             extraClaims.put("role", inviteToken.getRole());
-                            inviteTokenRepository.delete(inviteToken);
+
+                            inviteToken.setUsed(true);
+                            inviteTokenRepository.save(inviteToken);
                         },
                         () -> {
-                            throw new InvalidTokenException();
+                            throw new InvalidTokenException("Token does not exist");
                         }
                 );
         }
@@ -63,9 +74,9 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role((Role) extraClaims.get("role"))
+                .createdAt(Instant.now())
                 .build();
         userRepository.save(user);
-
 
         String jwtToken = jwtService.generateToken(extraClaims, user);
         return AuthenticationResponse.builder()

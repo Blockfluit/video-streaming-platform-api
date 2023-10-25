@@ -6,6 +6,8 @@ import java.time.Instant;
 
 public record InviteTokenDTO(String token,
                              Instant expiration,
+                             boolean used,
+                             boolean master,
                              Instant createdAt,
                              Role role,
                              String createdBy) {

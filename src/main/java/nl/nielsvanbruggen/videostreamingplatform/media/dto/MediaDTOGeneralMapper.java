@@ -9,7 +9,6 @@ import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.ReviewRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
 import org.springframework.stereotype.Component;
 

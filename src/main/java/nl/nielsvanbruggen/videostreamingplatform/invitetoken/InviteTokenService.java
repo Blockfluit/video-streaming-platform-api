@@ -17,7 +17,6 @@ import java.util.Arrays;
 public class InviteTokenService {
     private final InviteTokenRepository inviteTokenRepository;
     private final UserRepository userRepository;
-    private final InviteTokenDTOMapper inviteTokenDTOMapper;
 
     public void createInviteToken(InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
         if(inviteTokenPostRequest.getExpiration() == null ||
@@ -35,6 +34,8 @@ public class InviteTokenService {
         InviteToken token = InviteToken.builder()
                 .token(TokenGeneratorUtil.generate(64))
                 .expiration(inviteTokenPostRequest.getExpiration())
+                .used(false)
+                .master(inviteTokenPostRequest.isMaster())
                 .createdBy(user)
                 .role(role)
                 .createdAt(Instant.now())

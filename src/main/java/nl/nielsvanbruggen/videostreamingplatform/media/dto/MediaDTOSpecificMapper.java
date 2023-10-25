@@ -25,6 +25,8 @@ public class MediaDTOSpecificMapper implements Function<Media, MediaDTOSpecific>
     private final VideoRepository videoRepository;
     private final ActorDTOMapper actorDTOMapper;
     private final VideoDTOMapper videoDTOMapper;
+    private final RatingDTOMapper ratingDTOMapper;
+    private final ReviewDTOMapper reviewDTOMapper;
     private final ReviewRepository reviewRepository;
     private final WatchedRepository watchedRepository;
 
@@ -50,11 +52,12 @@ public class MediaDTOSpecificMapper implements Function<Media, MediaDTOSpecific>
                 .videos(videoRepository.findAllByMedia(media).stream()
                         .map(videoDTOMapper)
                         .collect(Collectors.toList()))
-                .rating(ratingRepository.findAllByMedia(media).stream()
-                        .mapToDouble(Rating::getScore)
-                        .average()
-                        .orElse(-1))
-                .reviews(reviewRepository.findAllByMedia(media))
+                .ratings(ratingRepository.findAllByMedia(media).stream()
+                        .map(ratingDTOMapper)
+                        .collect(Collectors.toList()))
+                .reviews(reviewRepository.findAllByMedia(media).stream()
+                        .map(reviewDTOMapper)
+                        .collect(Collectors.toList()))
                 .views(watchedRepository.totalUniqueViewsByMedia(media))
                 .build();
     }

@@ -1,15 +1,10 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.controller;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class ReviewPatchRequest {
+public class ReviewDeleteRequest {
     @NotNull
     private Long id;
-    @NotBlank
-    private String title;
-    @NotBlank
-    private String comment;
 }

@@ -33,6 +33,8 @@ public class VideoStreamingPlatformApplication {
 			InviteToken masterToken = InviteToken.builder()
 					.token(TokenGeneratorUtil.generate(64))
 					.createdAt(Instant.now())
+					.used(false)
+					.master(true)
 					.expiration(Instant.now().plus(365, ChronoUnit.DAYS))
 					.role(Role.ADMIN)
 					.build();

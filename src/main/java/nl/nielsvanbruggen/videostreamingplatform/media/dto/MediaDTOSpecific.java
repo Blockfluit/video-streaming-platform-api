@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Review;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
 
 import java.time.Instant;
 import java.util.List;
@@ -29,7 +28,7 @@ public class MediaDTOSpecific {
     private List<String> genre;
     private List<ActorDTO> actors;
     private List<VideoDTO> videos;
-    private List<Review> reviews;
+    private List<ReviewDTO> reviews;
     private int views;
-    private double rating;
+    private List<RatingDTO> ratings;
 }
