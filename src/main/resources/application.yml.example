@@ -17,6 +17,7 @@ spring:
     multipart:
       max-file-size: 10MB
 env:
+  secret-key: secret-key-string
   videos:
     root: root/path/of/videos
   thumbnail:

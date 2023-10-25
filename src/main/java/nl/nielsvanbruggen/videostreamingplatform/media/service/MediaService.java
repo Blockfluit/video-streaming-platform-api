@@ -211,6 +211,7 @@ public class MediaService {
             }
         }
 
+        media.setUpdatedAt(Instant.now());
         mediaRepository.save(media);
         updateAllMedia();
     }
