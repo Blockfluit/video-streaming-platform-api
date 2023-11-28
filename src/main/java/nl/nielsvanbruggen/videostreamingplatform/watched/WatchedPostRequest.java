@@ -1,6 +1,5 @@
-package nl.nielsvanbruggen.videostreamingplatform.Watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

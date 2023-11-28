@@ -97,8 +97,8 @@ public class VideoService {
                 videoRepository.save(video);
 
                 executorService.execute(() -> {
-                    // TODO: Would be cleaner if in own function.
                     try {
+                        // TODO: Would be cleaner if in own function.
                         float duration = (float) ffprobe.probe(videoPath.toString()).getFormat().duration;
                         video.setDuration(duration);
 

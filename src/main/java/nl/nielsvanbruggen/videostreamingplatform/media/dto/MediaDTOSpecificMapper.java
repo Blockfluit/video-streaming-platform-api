@@ -1,13 +1,12 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.Watched.WatchedRepository;
+import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.repository.MediaActorRepository;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.ReviewRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;

@@ -20,16 +20,16 @@ public class StreamController {
 
     @GetMapping("/subtitle/{id}")
     public ResponseEntity<?> getSubtitle(@PathVariable Long id, @RequestHeader HttpHeaders headers) {
-        return streamService.getSubtitle(id, headers);
+        return streamService.getSubtitle(id);
     }
 
     @GetMapping("/thumbnail/{id}")
     public ResponseEntity<?> getThumbnail(@PathVariable Long id, @RequestHeader HttpHeaders headers) {
-        return streamService.getThumbnail(id, headers);
+        return streamService.getThumbnail(id);
     }
 
     @GetMapping("/snapshot/{id}")
     public ResponseEntity<?> getSnapshot(@PathVariable Long id, @RequestHeader HttpHeaders headers) {
-        return streamService.getSnapshot(id, headers);
+        return streamService.getSnapshot(id);
     }
 }

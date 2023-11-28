@@ -74,6 +74,7 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role((Role) extraClaims.get("role"))
+                .lastLoginAt(Instant.now())
                 .createdAt(Instant.now())
                 .build();
         userRepository.save(user);

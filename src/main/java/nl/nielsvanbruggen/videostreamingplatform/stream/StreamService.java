@@ -1,6 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.stream;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
@@ -12,12 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StreamService {
@@ -37,7 +39,7 @@ public class StreamService {
     private static final ConcurrentLinkedQueue<IdPath> videoPaths = new ConcurrentLinkedQueue<>();
     private static final ConcurrentLinkedQueue<IdPath> subtitlePaths = new ConcurrentLinkedQueue<>();
 
-    public ResponseEntity<byte[]> getVideo(long id, HttpHeaders headers) {
+    public ResponseEntity<?> getVideo(long id, HttpHeaders headers) {
         String path =  videoPaths.stream()
                 .filter(entry -> entry.getId() == id)
                 .map(IdPath::getPath)
@@ -52,10 +54,10 @@ public class StreamService {
                 });
         String absolutePath = videosRoot + "/" + path;
 
-        return createStreamResponseEntity(absolutePath, headers);
+        return createStreamResponseEntity(Path.of(absolutePath), headers);
     }
 
-    public ResponseEntity<byte[]> getSubtitle(long id, HttpHeaders headers) {
+    public ResponseEntity<?> getSubtitle(long id) {
         String path =  subtitlePaths.stream()
                 .filter(entry -> entry.getId() == id)
                 .findFirst()
@@ -70,10 +72,10 @@ public class StreamService {
                 });
         String absolutePath = videosRoot + "/" + path;
 
-        return createStreamResponseEntity(absolutePath, headers);
+        return createCompleteResponseEntity(Path.of(absolutePath));
     }
 
-    public ResponseEntity<byte[]> getThumbnail(long id, HttpHeaders headers) {
+    public ResponseEntity<?> getThumbnail(long id) {
         String path =  thumbnailPaths.stream()
                 .filter(entry -> entry.getId() == id)
                 .findFirst()
@@ -88,10 +90,10 @@ public class StreamService {
                 });
         String absolutePath = thumbnailRoot + "/" + path;
 
-        return createStreamResponseEntity(absolutePath, headers);
+        return createCompleteResponseEntity(Path.of(absolutePath));
     }
 
-    public ResponseEntity<byte[]> getSnapshot(long id, HttpHeaders headers) {
+    public ResponseEntity<?> getSnapshot(long id) {
         String path = snapshotPaths.stream()
                 .filter(entry -> entry.getId() == id)
                 .findFirst()
@@ -107,62 +109,77 @@ public class StreamService {
                 });
         String absolutePath = snapshotRoot + "/" + path;
 
-        return createStreamResponseEntity(absolutePath, headers);
+        return createCompleteResponseEntity(Path.of(absolutePath));
     }
 
-    private ResponseEntity<byte[]> createStreamResponseEntity(String filepath, HttpHeaders headers) {
+    private ResponseEntity<?> createStreamResponseEntity(Path path, HttpHeaders headers) {
+        long tot = totalBytes(path);
+
         if(headers.getRange().size() == 0) {
-            return createInitialResponse(filepath);
+            System.out.println(path.getFileName());
+            return createInitialResponse(path, tot);
         }
-        int start = Integer.parseInt(headers.getRange().get(0).toString()
-                .split("-")[0]);
-        return createPartialResponse(filepath, start);
+
+        String rangeHeader = headers.getRange().get(0).toString();
+        long start = Long.parseLong(rangeHeader.split("-")[0]);
+        long end = rangeHeader.split("-").length == 1 ?
+                Math.min((start + MAX_CHUNK_SIZE_BYTES), tot - 1):
+                Long.parseLong(rangeHeader.split("-")[1]);
+
+        return createPartialResponse(path, start, end, tot);
     }
 
-    private ResponseEntity<byte[]> createInitialResponse(String path) {
-        int tot = totalBytes(path);
-        // -1 because its zero-indexed
-        int end = Math.min(MAX_CHUNK_SIZE_BYTES, tot) - 1;
-        byte[] bytes = readBytes(path, 0);
-        MultiValueMap<String, String> responseHeaders = createResponseHeaders(0, end, tot, bytes.length, MimeTypeUtil.getMimeType(path));
+    private ResponseEntity<byte[]> createCompleteResponseEntity(Path path) {
+        long tot = totalBytes(path);
+        byte[] bytes = readBytes(path, 0, tot);
+
+        MultiValueMap<String, String> responseHeaders = new HttpHeaders();
+        responseHeaders.add("Accept-Ranges", "bytes");
+        responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
+        responseHeaders.add("Content-Length", Long.toString(tot));
+        responseHeaders.add("Cache-Control", "public, max-age=31536000");
 
         return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.OK);
     }
 
-    private ResponseEntity<byte[]> createPartialResponse(String path, int off) {
-        int tot = totalBytes(path);
-        // -1 because its zero-indexed
-        int end = Math.min((off + MAX_CHUNK_SIZE_BYTES), tot) - 1;
-        byte[] bytes = readBytes(path, off);
-        MultiValueMap<String, String> responseHeaders = createResponseHeaders(off, end, tot, bytes.length, MimeTypeUtil.getMimeType(path));
+    private ResponseEntity<?> createInitialResponse(Path path, long tot) {
+        MultiValueMap<String, String> responseHeaders = new HttpHeaders();
+        responseHeaders.add("Accept-Ranges", "bytes");
+        responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
+        responseHeaders.add("Content-Length", Long.toString(tot));
+        responseHeaders.add("Cache-Control", "no-cache");
+
+        return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
+    }
+
+    private ResponseEntity<byte[]> createPartialResponse(Path path, long start, long end, long tot) {
+        byte[] bytes = readBytes(path, start, end);
+
+        MultiValueMap<String, String> responseHeaders = new HttpHeaders();
+        responseHeaders.add("Content-Range", String.format("bytes %1$d-%2$d/%3$d", start, end, tot));
+        responseHeaders.add("Accept-Ranges", "bytes");
+        responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
+        responseHeaders.add("Content-Length", Long.toString(bytes.length));
+        responseHeaders.add("Cache-Control", "public, max-age=3600");
 
         return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.PARTIAL_CONTENT);
     }
 
-    private MultiValueMap<String, String> createResponseHeaders(int off, int end, int tot, int len, String mimeType) {
-        MultiValueMap<String, String> responseHeaders = new HttpHeaders();
-        responseHeaders.add("Content-Range", String.format("bytes %1$d-%2$d/%3$d", off, end, tot));
-        responseHeaders.add("Accept-Ranges", "bytes");
-        responseHeaders.add("Content-Type", mimeType);
-        responseHeaders.add("Content-Length", Integer.toString(len));
-        return responseHeaders;
-    }
-
-    private byte[] readBytes(String path, int off) {
-        try(FileInputStream is = new FileInputStream(path)) {
-            is.skip(off);
-            return is.readNBytes(MAX_CHUNK_SIZE_BYTES);
+    private byte[] readBytes(Path path, long start, long end) {
+        try(InputStream is = Files.newInputStream(path)) {
+            is.skip(start);
+            // plus 1 because its zero-based
+            return is.readNBytes((int) (end - start + 1));
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            log.warn(e.getMessage());
             return new byte[0];
         }
     }
-
-    private int totalBytes(String path) {
-        try(FileInputStream is = new FileInputStream(path)) {
-            return is.available();
+    private long totalBytes(Path path) {
+        try {
+            return Files.size(path);
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            log.warn(e.getMessage());
             return 0;
         }
     }

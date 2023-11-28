@@ -45,5 +45,4 @@ public class VideoStreamingPlatformApplication {
 			System.out.println(">----------------------<");
 		};
 	}
-
 }

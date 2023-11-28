@@ -1,7 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.Watched.WatchedRepository;
+import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.repository.MediaActorRepository;

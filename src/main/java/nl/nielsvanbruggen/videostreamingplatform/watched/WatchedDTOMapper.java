@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.Watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched;
 
 import org.springframework.stereotype.Component;
 

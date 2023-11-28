@@ -30,9 +30,6 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(configurer -> configurer.configurationSource(configurationSource))
                 .authorizeHttpRequests(customizer -> customizer
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/change-password").permitAll()
-                        .requestMatchers("/api/v1/stream/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/request").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/tickets").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/api/v1/actors").hasAuthority(Role.ADMIN.name())
@@ -44,6 +41,9 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/media/*").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/api/v1/users").hasAuthority(Role.ADMIN.name())
                         .requestMatchers("/api/v1/invite-tokens").hasAuthority(Role.ADMIN.name())
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/stream/**").permitAll()
+                        .requestMatchers("/api/v1/change-password").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(customizer -> customizer
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.Watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched;
 
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;

@@ -1,9 +1,12 @@
 package nl.nielsvanbruggen.videostreamingplatform.global.util;
 
+import java.nio.file.Path;
+
 public class MimeTypeUtil {
     private MimeTypeUtil() {}
-    public static String getMimeType(String filePath) {
-        String extension = filePath.substring(filePath.lastIndexOf('.') + 1);
+    public static String getMimeType(Path path) {
+        String extension = path.getFileName().toString()
+                .substring(path.getFileName().toString().lastIndexOf('.') + 1);
 
         return switch (extension) {
             case "mp4" -> "video/mp4";
