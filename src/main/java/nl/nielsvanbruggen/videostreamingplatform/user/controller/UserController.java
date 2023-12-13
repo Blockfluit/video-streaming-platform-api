@@ -19,14 +19,14 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
-    private final UserRepository userRepository;
-    private final UserDTOMapper userDTOMapper;
 
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getUsers() {
-        return ResponseEntity.ok(userRepository.findAll().stream()
-                .map(userDTOMapper)
-                .collect(Collectors.toList()));
+    public ResponseEntity<AllUsersGetResponse> getAllUsers() {
+        AllUsersGetResponse response = AllUsersGetResponse.builder()
+                .allUsers(userService.getAllUsers())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PatchMapping

@@ -45,10 +45,8 @@ public class MediaDTOGeneralMapper implements Function<Media, MediaDTOGeneral> {
                         .map(actorDTOMapper)
                         .collect(Collectors.toList()))
                 .videos(videoRepository.findAllByMedia(media).size())
-                .rating(ratingRepository.findAllByMedia(media).stream()
-                        .mapToDouble(Rating::getScore)
-                        .average()
-                        .orElse(-1))
+                .rating(ratingRepository.averageScoreByMedia(media)
+                        .orElse(-1D))
                 .views(watchedRepository.totalUniqueViewsByMedia(media))
                 .build();
     }

@@ -16,8 +16,12 @@ public class MediaRequestController {
     private final MediaRequestService mediaRequestService;
 
     @GetMapping
-    public ResponseEntity<List<MediaRequestDTO>> getMediaRequest() {
-        return new ResponseEntity<>(mediaRequestService.getMediaRequest(), HttpStatus.OK);
+    public ResponseEntity<AllMediaRequestGetResponse> getMediaRequest() {
+        AllMediaRequestGetResponse response = AllMediaRequestGetResponse.builder()
+                .allMediaRequests(mediaRequestService.getAllMediaRequests())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping

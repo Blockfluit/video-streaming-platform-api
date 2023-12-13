@@ -20,7 +20,7 @@ public class MediaRequestService {
     private final UserRepository userRepository;
     private final MediaRequestDTOMapper mediaRequestDTOMapper;
 
-    public List<MediaRequestDTO> getMediaRequest() {
+    public List<MediaRequestDTO> getAllMediaRequests() {
         return mediaRequestRepository.findAll().stream()
                 .map(mediaRequestDTOMapper)
                 .collect(Collectors.toList());

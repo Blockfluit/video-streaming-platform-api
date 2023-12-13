@@ -11,12 +11,21 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class InviteTokenService {
     private final InviteTokenRepository inviteTokenRepository;
     private final UserRepository userRepository;
+    private final InviteTokenDTOMapper inviteTokenDTOMapper;
+
+    public List<InviteTokenDTO> getAllInviteTokens() {
+        return inviteTokenRepository.findAll().stream()
+                .map(inviteTokenDTOMapper)
+                .collect(Collectors.toList());
+    }
 
     public void createInviteToken(InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
         if(inviteTokenPostRequest.getExpiration() == null ||

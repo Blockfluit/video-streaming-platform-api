@@ -18,8 +18,12 @@ public class ActorController {
     private final ActorService actorService;
 
     @GetMapping
-    public ResponseEntity<List<Actor>> getActor() {
-        return new ResponseEntity<>(actorService.getActors(), HttpStatus.OK);
+    public ResponseEntity<AllActorsGetResponse> getAllActor() {
+        AllActorsGetResponse response = AllActorsGetResponse.builder()
+                .allActors(actorService.getActors())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping

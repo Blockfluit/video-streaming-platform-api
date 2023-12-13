@@ -1,6 +1,5 @@
 package nl.nielsvanbruggen.videostreamingplatform.invitetoken;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.GlobalExceptionHandler;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
@@ -16,15 +15,16 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/invite-tokens")
 public class InviteTokenController {
-    private final InviteTokenRepository inviteTokenRepository;
     private final InviteTokenService inviteTokenService;
-    private final InviteTokenDTOMapper inviteTokenDTOMapper;
+
 
     @GetMapping
-    public ResponseEntity<List<InviteTokenDTO>> getTokens() {
-        return ResponseEntity.ok(inviteTokenRepository.findAll().stream()
-                .map(inviteTokenDTOMapper)
-                .collect(Collectors.toList()));
+    public ResponseEntity<AllInviteTokensGetResponse> getAllInviteTokens() {
+        AllInviteTokensGetResponse response = AllInviteTokensGetResponse.builder()
+                .allInviteTokens(inviteTokenService.getAllInviteTokens())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping

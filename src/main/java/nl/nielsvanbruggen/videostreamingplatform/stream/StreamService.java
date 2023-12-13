@@ -2,9 +2,6 @@ package nl.nielsvanbruggen.videostreamingplatform.stream;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.SubtitleRepository;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
 import nl.nielsvanbruggen.videostreamingplatform.global.util.MimeTypeUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -17,96 +14,43 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class StreamService {
+    private final StreamCache streamCache;
     private final static int MAX_CHUNK_SIZE_BYTES = 1024 * 1024;
-    private final VideoRepository videoRepository;
-    private final MediaRepository mediaRepository;
-    private final SubtitleRepository subtitleRepository;
     @Value("${env.thumbnail.root}")
     private String thumbnailRoot;
     @Value("${env.snapshot.root}")
     private String snapshotRoot;
     @Value("${env.videos.root}")
     private String videosRoot;
-    // Allows for storing paths to id in memory. Dramatically reduces the amount of database queries.
-    private static final ConcurrentLinkedQueue<IdPath> thumbnailPaths = new ConcurrentLinkedQueue<>();
-    private static final ConcurrentLinkedQueue<IdPath> snapshotPaths = new ConcurrentLinkedQueue<>();
-    private static final ConcurrentLinkedQueue<IdPath> videoPaths = new ConcurrentLinkedQueue<>();
-    private static final ConcurrentLinkedQueue<IdPath> subtitlePaths = new ConcurrentLinkedQueue<>();
 
     public ResponseEntity<?> getVideo(long id, HttpHeaders headers) {
-        String path =  videoPaths.stream()
-                .filter(entry -> entry.getId() == id)
-                .map(IdPath::getPath)
-                .findFirst()
-                .orElseGet(() -> {
-                    String relativePath = videoRepository.findById(id)
-                            .orElseThrow(() -> new IllegalArgumentException("Video id does not exist.")).getPath();
-                    IdPath idPath = new IdPath(id, relativePath);
-                    if(videoPaths.size() < 1000) videoPaths.poll();
-                    videoPaths.add(idPath);
-                    return idPath.getPath();
-                });
+        String path = streamCache.getVideoPath(id);
         String absolutePath = videosRoot + "/" + path;
 
         return createStreamResponseEntity(Path.of(absolutePath), headers);
     }
 
     public ResponseEntity<?> getSubtitle(long id) {
-        String path =  subtitlePaths.stream()
-                .filter(entry -> entry.getId() == id)
-                .findFirst()
-                .map(IdPath::getPath)
-                .orElseGet(() -> {
-                    String relativePath = subtitleRepository.findById(id)
-                            .orElseThrow(() -> new IllegalArgumentException("Subtitle id does not exist.")).getPath();
-                    IdPath idPath = new IdPath(id, relativePath);
-                    if(subtitlePaths.size() < 300) subtitlePaths.poll();
-                    subtitlePaths.add(idPath);
-                    return idPath.getPath();
-                });
+        String path = streamCache.getSubtitlePath(id);
         String absolutePath = videosRoot + "/" + path;
 
         return createCompleteResponseEntity(Path.of(absolutePath));
     }
 
     public ResponseEntity<?> getThumbnail(long id) {
-        String path =  thumbnailPaths.stream()
-                .filter(entry -> entry.getId() == id)
-                .findFirst()
-                .map(IdPath::getPath)
-                .orElseGet(() -> {
-                    String relativePath = mediaRepository.findById(id)
-                            .orElseThrow(() -> new IllegalArgumentException("Media id does not exist.")).getThumbnail();
-                    IdPath idPath = new IdPath(id, relativePath);
-                    if(thumbnailPaths.size() < 2000) thumbnailPaths.poll();
-                    thumbnailPaths.add(idPath);
-                    return idPath.getPath();
-                });
+        String path = streamCache.getThumbnailPath(id);
         String absolutePath = thumbnailRoot + "/" + path;
 
         return createCompleteResponseEntity(Path.of(absolutePath));
     }
 
     public ResponseEntity<?> getSnapshot(long id) {
-        String path = snapshotPaths.stream()
-                .filter(entry -> entry.getId() == id)
-                .findFirst()
-                .map(IdPath::getPath)
-                .orElseGet(() -> {
-                    String relativePath = videoRepository.findById(id)
-                            .orElseThrow(() -> new IllegalArgumentException("Video id does not exist."))
-                            .getSnapshot();
-                    IdPath idPath = new IdPath(id, relativePath);
-                    if(snapshotPaths.size() < 4000) snapshotPaths.poll();
-                    snapshotPaths.add(idPath);
-                    return idPath.getPath();
-                });
+        String path = streamCache.getSnapshotPath(id);
         String absolutePath = snapshotRoot + "/" + path;
 
         return createCompleteResponseEntity(Path.of(absolutePath));
@@ -116,7 +60,6 @@ public class StreamService {
         long tot = totalBytes(path);
 
         if(headers.getRange().size() == 0) {
-            System.out.println(path.getFileName());
             return createInitialResponse(path, tot);
         }
 
@@ -142,7 +85,7 @@ public class StreamService {
         return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.OK);
     }
 
-    private ResponseEntity<?> createInitialResponse(Path path, long tot) {
+    private ResponseEntity<Void> createInitialResponse(Path path, long tot) {
         MultiValueMap<String, String> responseHeaders = new HttpHeaders();
         responseHeaders.add("Accept-Ranges", "bytes");
         responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));

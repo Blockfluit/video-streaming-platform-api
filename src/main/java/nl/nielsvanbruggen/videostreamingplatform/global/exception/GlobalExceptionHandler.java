@@ -2,6 +2,7 @@ package nl.nielsvanbruggen.videostreamingplatform.global.exception;
 
 
 import com.sun.jdi.InternalException;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InternalException.class)
     public ResponseEntity<?> handleInternalException(InternalException internalException) {
         return new ResponseEntity<>(singleMessageToErrorMap(internalException.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<?> handleExpiredJwtException(ExpiredJwtException expiredJwtException) {
+        return new ResponseEntity<>(singleMessageToErrorMap(expiredJwtException.getMessage()), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<?> handleResourceNotFoundException(ResourceNotFoundException resourceNotFoundException) {
+        return new ResponseEntity<>(singleMessageToErrorMap(resourceNotFoundException.getMessage()), HttpStatus.NOT_FOUND);
     }
 
     public static Map<String, List<String>> singleMessageToErrorMap(String message) {

@@ -3,6 +3,7 @@ package nl.nielsvanbruggen.videostreamingplatform.media.service;
 import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSpecific;
 import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
@@ -27,21 +28,21 @@ import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class MediaService {
+public class MediaService implements InitializingBean {
     private final VideoRepository videoRepository;
     private final RatingRepository ratingRepository;
     private final UserRepository userRepository;
@@ -61,24 +62,33 @@ public class MediaService {
     private String videosRoot;
     @Value("${env.ffprobe.path}")
     private String ffprobePath;
-    private static List<MediaDTOGeneral> allMedia = new ArrayList<>();
+    private final static List<MediaDTOGeneral> allMedia = new ArrayList<>();
+    private final static List<MediaDTOGeneral> lastMedia = new ArrayList<>();
+    public static boolean allMediaRevalidate = true;
+    public static boolean lastMediaRevalidate = true;
 
-    public List<?> getMedia(Long id, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        user.setLastActiveAt(Instant.now());
-        userRepository.save(user);
+    public MediaDTOSpecific getMedia(Long id) {
+        return mediaRepository.findById(id)
+                .map(mediaDTOSpecificMapper)
+                .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
+    }
 
-        if(id != null) {
-            return List.of(mediaRepository.findById(id)
-                    .map(mediaDTOSpecificMapper)
-                    .orElseThrow(() -> new IllegalArgumentException("Id does not exist.")));
-        }
-
-        if(allMedia.isEmpty()) {
+    public List<MediaDTOGeneral> getAllMedia() {
+        if(allMediaRevalidate) {
             updateAllMedia();
+            allMediaRevalidate = false;
         }
+
         return allMedia;
+    }
+
+    public List<MediaDTOGeneral> getLastWatchedMedia() {
+         if(lastMediaRevalidate) {
+             updateLastMedia();
+             lastMediaRevalidate = false;
+         }
+
+         return lastMedia;
     }
 
     public void postRating(Long id, RatingPostRequest request, Authentication authentication) {
@@ -95,7 +105,7 @@ public class MediaService {
                 .build();
 
         ratingRepository.save(rating);
-        updateAllMedia();
+        allMediaRevalidate = true;
     }
 
     public void postReview(Long id, ReviewPostRequest request, Authentication authentication) {
@@ -120,7 +130,7 @@ public class MediaService {
                 .build();
 
         reviewRepository.save(review);
-        updateAllMedia();
+        allMediaRevalidate = true;
     }
 
     public void patchReview(Long id, ReviewPatchRequest request, Authentication authentication) {
@@ -146,7 +156,7 @@ public class MediaService {
         review.setComment(request.getComment());
 
         reviewRepository.save(review);
-        updateAllMedia();
+        allMediaRevalidate = true;
     }
 
     public void deleteReview(Long id, ReviewDeleteRequest request, Authentication authentication) {
@@ -162,11 +172,10 @@ public class MediaService {
         }
 
         reviewRepository.delete(review);
-        updateAllMedia();
+        allMediaRevalidate = true;
     }
 
     public void patchMedia(Long id, MediaPatchRequest request) {
-        // TODO: add logic for updating media
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
 
@@ -179,12 +188,24 @@ public class MediaService {
             if (genres.size() < request.getGenres().size()) {
                 throw new IllegalArgumentException("Not all genres exist in the database.");
             }
+            List<MediaGenre> mediaGenres = genreRepository.findAllById(request.getGenres()).stream()
+                    .map(genre -> new MediaGenre(media, genre))
+                    .toList();
+
+            mediaGenreRepository.deleteByMedia(media);
+            mediaGenreRepository.saveAll(mediaGenres);
         }
         if(request.getActors() != null) {
             List<Actor> actors = actorRepository.findAllById(request.getActors());
             if (actors.size() < request.getActors().size()) {
                 throw new IllegalArgumentException("Not all actors exist in the database.");
             }
+            List<MediaActor> mediaActors = actorRepository.findAllById(request.getActors()).stream()
+                    .map(actor -> new MediaActor(media, actor))
+                    .toList();
+
+            mediaActorRepository.deleteByMedia(media);
+            mediaActorRepository.saveAll(mediaActors);
         }
         if(request.getThumbnail() != null) {
             String imageName = media.getName() + "_" + media.getYear() + ".jpg";
@@ -213,7 +234,7 @@ public class MediaService {
 
         media.setUpdatedAt(Instant.now());
         mediaRepository.save(media);
-        updateAllMedia();
+        allMediaRevalidate = true;
     }
 
     public void postMedia(MediaPostRequest request) {
@@ -265,7 +286,7 @@ public class MediaService {
         }
         genres.forEach(genre -> mediaGenreRepository.save(new MediaGenre(media, genre)));
         actors.forEach(actor -> mediaActorRepository.save(new MediaActor(media, actor)));
-        updateAllMedia();
+        allMediaRevalidate = true;
     }
 
     @Transactional
@@ -284,12 +305,26 @@ public class MediaService {
 
         videoRepository.deleteAll(videos);
         mediaRepository.delete(media);
-        updateAllMedia();
+        allMediaRevalidate = true;
     }
 
-    public void updateAllMedia() {
-        allMedia = mediaRepository.findAll().stream()
+    public synchronized void updateAllMedia() {
+        allMedia.clear();
+        allMedia.addAll(mediaRepository.findAll().stream()
                 .map(mediaDTOGeneralMapper)
-                .collect(Collectors.toList());
+                .toList());
+    }
+
+    public synchronized void updateLastMedia() {
+        lastMedia.clear();
+        lastMedia.addAll(mediaRepository.findAllLastWatchedMedia(Pageable.ofSize(100)).stream()
+                .map(mediaDTOGeneralMapper)
+                .toList());
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        updateAllMedia();
+        updateLastMedia();
     }
 }

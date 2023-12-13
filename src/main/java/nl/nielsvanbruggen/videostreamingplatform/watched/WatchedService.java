@@ -20,9 +20,8 @@ public class WatchedService {
     private final WatchedRepository watchedRepository;
     private final VideoRepository videoRepository;
     private final WatchedDTOMapper watchedDTOMapper;
-    private final MediaService mediaService;
 
-    public List<WatchedDTO> getWatched(Authentication authentication) {
+    public List<WatchedDTO> getAllWatched(Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User does not exist."));
 
@@ -47,6 +46,7 @@ public class WatchedService {
         watched.setTimestamp(request.getTimestamp());
 
         watchedRepository.save(watched);
-        mediaService.updateAllMedia();
+        MediaService.allMediaRevalidate = true;
+        MediaService.lastMediaRevalidate = true;
     }
 }

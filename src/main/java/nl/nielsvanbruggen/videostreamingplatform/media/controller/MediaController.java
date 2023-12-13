@@ -14,13 +14,35 @@ import org.springframework.web.bind.annotation.*;
 public class MediaController {
     private final MediaService mediaService;
 
-    @GetMapping({"/", "/{id}"})
-    public ResponseEntity<?> getMedia(@PathVariable(required = false) Long id, Authentication authentication) {
-        return new ResponseEntity<>(mediaService.getMedia(id, authentication), HttpStatus.OK);
+    @GetMapping("/{id}")
+    public ResponseEntity<MediaGetResponse> getMedia(@PathVariable(required = false) Long id) {
+        MediaGetResponse response = MediaGetResponse.builder()
+                .media(mediaService.getMedia(id))
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<AllMediaGetResponse> getAllMedia() {
+        AllMediaGetResponse response = AllMediaGetResponse.builder()
+                .allMedia(mediaService.getAllMedia())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/last-watched")
+    public ResponseEntity<LastWatchedGetResponse> getLastWatchedMedia() {
+        LastWatchedGetResponse response = LastWatchedGetResponse.builder()
+                .lastWatched(mediaService.getLastWatchedMedia())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/{id}/rate")
-    public ResponseEntity<?> postRate(@PathVariable Long id, @Valid @RequestBody RatingPostRequest ratingPostRequest, Authentication authentication) {
+    public ResponseEntity<Void> postRate(@PathVariable Long id, @Valid @RequestBody RatingPostRequest ratingPostRequest, Authentication authentication) {
         mediaService.postRating(id, ratingPostRequest, authentication);
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -32,31 +54,31 @@ public class MediaController {
     }
 
     @PutMapping("/{id}/review")
-    public ResponseEntity<?> patchReview(@PathVariable Long id, @Valid @RequestBody ReviewPatchRequest reviewPatchRequest, Authentication authentication) {
+    public ResponseEntity<Void> patchReview(@PathVariable Long id, @Valid @RequestBody ReviewPatchRequest reviewPatchRequest, Authentication authentication) {
         mediaService.patchReview(id, reviewPatchRequest, authentication);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}/review")
-    public ResponseEntity<?> deleteReview(@PathVariable Long id, @Valid @RequestBody ReviewDeleteRequest reviewDeleteRequest, Authentication authentication) {
+    public ResponseEntity<Void> deleteReview(@PathVariable Long id, @Valid @RequestBody ReviewDeleteRequest reviewDeleteRequest, Authentication authentication) {
         mediaService.deleteReview(id, reviewDeleteRequest, authentication);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<?> postMedia(@Valid @ModelAttribute MediaPostRequest mediaPostRequest) {
+    public ResponseEntity<Void> postMedia(@Valid @ModelAttribute MediaPostRequest mediaPostRequest) {
         mediaService.postMedia(mediaPostRequest);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> patchMedia(@PathVariable Long id, @ModelAttribute MediaPatchRequest mediaPatchRequest) {
+    public ResponseEntity<Void> patchMedia(@PathVariable Long id, @ModelAttribute MediaPatchRequest mediaPatchRequest) {
         mediaService.patchMedia(id, mediaPatchRequest);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMedia(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMedia(@PathVariable Long id) {
         mediaService.deleteMedia(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }

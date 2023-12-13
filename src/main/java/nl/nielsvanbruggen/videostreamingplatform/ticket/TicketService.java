@@ -19,7 +19,7 @@ public class TicketService {
     private final UserRepository userRepository;
     private final TicketDTOMapper ticketDTOMapper;
 
-    public List<TicketDTO> getTickets(Authentication authentication) {
+    public List<TicketDTO> getAllTickets(Authentication authentication) {
         if(authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))) {
             return ticketRepository.findAll().stream()
                     .map(ticketDTOMapper)
