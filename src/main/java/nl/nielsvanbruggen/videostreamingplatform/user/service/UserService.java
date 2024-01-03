@@ -61,11 +61,4 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
         userRepository.delete(user);
     }
-
-    public void updateLastActiveAt(Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        user.setLastActiveAt(Instant.now());
-        userRepository.save(user);
-    }
 }

@@ -15,7 +15,11 @@ public class RecommendationController {
     private final RecommendationService recommendationService;
 
     @GetMapping
-    public ResponseEntity<?> getRecommendations(Authentication authentication) {
-        return new ResponseEntity<>(recommendationService.getRecommendations(authentication), HttpStatus.OK);
+    public ResponseEntity<RecommendationGetResponse> getRecommendations(Authentication authentication) {
+        RecommendationGetResponse response = RecommendationGetResponse.builder()
+                .recommendations(recommendationService.getRecommendations(authentication))
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

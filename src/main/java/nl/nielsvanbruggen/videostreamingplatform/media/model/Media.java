@@ -5,8 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder

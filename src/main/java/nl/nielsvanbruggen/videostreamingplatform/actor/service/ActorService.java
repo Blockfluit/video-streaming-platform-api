@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.controller.ActorPostRequest;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.repository.ActorRepository;
+import nl.nielsvanbruggen.videostreamingplatform.recommendation.RecommendationCache;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,11 +29,15 @@ public class ActorService {
                 .lastname(actorPostRequest.getLastname())
                 .build();
         actorRepository.save(actor);
+        //TODO: move to some kind of query interceptor class.
+        RecommendationCache.allActorsRevalidate = true;
     }
 
     public void deleteActor(long id) {
         Actor actor = actorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Actor does not exist."));
         actorRepository.delete(actor);
+        //TODO: move to some kind of query interceptor class.
+        RecommendationCache.allActorsRevalidate = true;
     }
 }

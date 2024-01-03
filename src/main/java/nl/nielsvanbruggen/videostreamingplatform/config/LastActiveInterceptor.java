@@ -3,6 +3,7 @@ package nl.nielsvanbruggen.videostreamingplatform.config;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.user.service.UserActivityService;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
@@ -13,7 +14,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Component
 @RequiredArgsConstructor
 public class LastActiveInterceptor implements HandlerInterceptor {
-    private final UserService userService;
+    private final UserActivityService userActivityService;
 
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
@@ -21,7 +22,8 @@ public class LastActiveInterceptor implements HandlerInterceptor {
 
         if(authentication != null &&
                 !authentication.getName().equals("anonymousUser")) {
-            userService.updateLastActiveAt(authentication);
+            userActivityService.recordUserActivity(authentication);
+            //Todo: register activity in database.
         }
         return true;
     }

@@ -39,40 +39,49 @@ public class StreamService {
         String path = streamCache.getSubtitlePath(id);
         String absolutePath = videosRoot + "/" + path;
 
-        return createCompleteResponseEntity(Path.of(absolutePath));
+        return createFullResponseEntity(Path.of(absolutePath));
     }
 
     public ResponseEntity<?> getThumbnail(long id) {
         String path = streamCache.getThumbnailPath(id);
         String absolutePath = thumbnailRoot + "/" + path;
 
-        return createCompleteResponseEntity(Path.of(absolutePath));
+        return createFullResponseEntity(Path.of(absolutePath));
     }
 
     public ResponseEntity<?> getSnapshot(long id) {
         String path = streamCache.getSnapshotPath(id);
         String absolutePath = snapshotRoot + "/" + path;
 
-        return createCompleteResponseEntity(Path.of(absolutePath));
+        return createFullResponseEntity(Path.of(absolutePath));
     }
 
     private ResponseEntity<?> createStreamResponseEntity(Path path, HttpHeaders headers) {
         long tot = totalBytes(path);
 
-        if(headers.getRange().size() == 0) {
+        if (headers.getRange().size() == 0) {
             return createInitialResponse(path, tot);
         }
 
         String rangeHeader = headers.getRange().get(0).toString();
         long start = Long.parseLong(rangeHeader.split("-")[0]);
-        long end = rangeHeader.split("-").length == 1 ?
-                Math.min((start + MAX_CHUNK_SIZE_BYTES), tot - 1):
-                Long.parseLong(rangeHeader.split("-")[1]);
 
+        if (rangeHeader.split("-").length == 1) {
+            // MAX_CHUNK_SIZE_BYTES - 1, because its zero-based.
+            long end = Math.min((start + MAX_CHUNK_SIZE_BYTES - 1), tot - 1);
+            return createPartialResponse(path, start, end, tot);
+        }
+
+        long rangeEnd = Long.parseLong(rangeHeader.split("-")[1]);
+        if (rangeEnd < MAX_CHUNK_SIZE_BYTES - 1) {
+            return createPartialResponse(path, start, rangeEnd, tot);
+        }
+
+        long end = Math.min((start + MAX_CHUNK_SIZE_BYTES - 1), tot - 1);
         return createPartialResponse(path, start, end, tot);
     }
 
-    private ResponseEntity<byte[]> createCompleteResponseEntity(Path path) {
+    private ResponseEntity<byte[]> createFullResponseEntity(Path path) {
         long tot = totalBytes(path);
         byte[] bytes = readBytes(path, 0, tot);
 
@@ -111,10 +120,10 @@ public class StreamService {
     private byte[] readBytes(Path path, long start, long end) {
         try(InputStream is = Files.newInputStream(path)) {
             is.skip(start);
-            // plus 1 because its zero-based
+            // Plus 1 because it's zero-based.
             return is.readNBytes((int) (end - start + 1));
         } catch (IOException e) {
-            log.warn(e.getMessage());
+            log.warn(String.format("Could not read %d to %d bytes: %s", start, end, e.getMessage()));
             return new byte[0];
         }
     }
@@ -122,7 +131,7 @@ public class StreamService {
         try {
             return Files.size(path);
         } catch (IOException e) {
-            log.warn(e.getMessage());
+            log.warn("Could not read total amount of bytes: " + e.getMessage());
             return 0;
         }
     }

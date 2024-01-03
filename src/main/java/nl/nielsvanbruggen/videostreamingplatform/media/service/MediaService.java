@@ -175,6 +175,7 @@ public class MediaService implements InitializingBean {
         allMediaRevalidate = true;
     }
 
+    @Transactional
     public void patchMedia(Long id, MediaPatchRequest request) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
@@ -188,7 +189,7 @@ public class MediaService implements InitializingBean {
             if (genres.size() < request.getGenres().size()) {
                 throw new IllegalArgumentException("Not all genres exist in the database.");
             }
-            List<MediaGenre> mediaGenres = genreRepository.findAllById(request.getGenres()).stream()
+            List<MediaGenre> mediaGenres = genres.stream()
                     .map(genre -> new MediaGenre(media, genre))
                     .toList();
 
@@ -216,11 +217,12 @@ public class MediaService implements InitializingBean {
             }
         }
         if(request.getOrder() != null) {
-            request.getOrder().forEach(entry -> {
-                Video video = videoRepository.findById(entry.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Video does not exist."));
-                video.setIndex(entry.getIndex());
-                videoRepository.save(video);
+            request.getOrder()
+                    .forEach(entry -> {
+                        Video video = videoRepository.findById(entry.getId())
+                                .orElseThrow(() -> new IllegalArgumentException("Video does not exist."));
+                        video.setIndex(entry.getIndex());
+                        videoRepository.save(video);
             });
         }
 
