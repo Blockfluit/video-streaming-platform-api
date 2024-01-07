@@ -1,8 +1,8 @@
 package nl.nielsvanbruggen.videostreamingplatform.watchlist;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOGeneral;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOGeneralMapper;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
@@ -20,16 +20,16 @@ public class WatchlistService {
     private final UserRepository userRepository;
     private final WatchlistRepository watchlistRepository;
     private final MediaRepository mediaRepository;
-    private final MediaDTOGeneralMapper mediaDTOGeneralMapper;
+    private final MediaDTOMapper mediaDTOMapper;
 
 
-    public List<MediaDTOGeneral> getWatchlist(Authentication authentication) {
+    public List<MediaDTO> getWatchlist(Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new IllegalArgumentException("User does not exist."));
 
         return watchlistRepository.findAllByUser(user).stream()
                 .map(Watchlist::getMedia)
-                .map(mediaDTOGeneralMapper)
+                .map(mediaDTOMapper)
                 .collect(Collectors.toList());
     }
 

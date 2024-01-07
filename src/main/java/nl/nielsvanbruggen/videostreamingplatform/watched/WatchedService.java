@@ -3,10 +3,11 @@ package nl.nielsvanbruggen.videostreamingplatform.watched;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
-import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
-import nl.nielsvanbruggen.videostreamingplatform.recommendation.RecommendationCache;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -47,9 +48,5 @@ public class WatchedService {
         watched.setTimestamp(request.getTimestamp());
 
         watchedRepository.save(watched);
-        //TODO: move to some kind of query interceptor class.
-        MediaService.allMediaRevalidate = true;
-        MediaService.lastMediaRevalidate = true;
-        RecommendationCache.userRevalidate.put(user.getId(), true);
     }
 }

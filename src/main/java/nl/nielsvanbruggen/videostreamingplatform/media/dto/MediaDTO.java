@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTO;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Review;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
 
 import java.time.Instant;
@@ -15,7 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MediaDTOSpecific {
+public class MediaDTO {
     private long id;
     private String name;
     private String thumbnail;
@@ -25,7 +24,8 @@ public class MediaDTOSpecific {
     private int year;
     private Instant updatedAt;
     private Instant createdAt;
-    private List<String> genre;
+    private int videoCount;
+    private List<String> genres;
     private List<ActorDTO> actors;
     private List<VideoDTO> videos;
     private List<ReviewDTO> reviews;

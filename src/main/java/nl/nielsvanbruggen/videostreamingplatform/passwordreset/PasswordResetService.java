@@ -1,6 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.passwordreset;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
@@ -16,6 +17,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -39,8 +41,7 @@ public class PasswordResetService {
                     .build();
 
             passwordResetTokens.add(resetToken);
-            System.out.println(resetToken.getToken());
-            // TODO: forward token to given email. (reset-endpoint + ?token={token})
+            log.info(resetToken.getToken());
         }
     }
 

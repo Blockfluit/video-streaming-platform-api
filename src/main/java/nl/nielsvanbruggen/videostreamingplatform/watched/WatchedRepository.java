@@ -5,6 +5,7 @@ import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import org.hibernate.query.spi.Limit;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,9 +30,11 @@ public interface WatchedRepository extends JpaRepository<Watched, WatchedId> {
 
     List<Watched> deleteByVideoIn(List<Video> videos);
 
-    @Query("SELECT DISTINCT v.media " +
+    @Query("SELECT v.media, MAX(w.updatedAt) " +
             "FROM Watched w " +
             "INNER JOIN Video v ON w.video = v " +
-            "WHERE w.user = :user")
+            "WHERE w.user = :user " +
+            "GROUP BY v.media " +
+            "ORDER BY MAX(w.updatedAt) DESC")
     List<Media> findAllMediaByUser(@Param("user") User user);
 }

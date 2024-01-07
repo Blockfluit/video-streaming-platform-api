@@ -1,5 +1,6 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.controller.UserDeleteRequest;
 import nl.nielsvanbruggen.videostreamingplatform.user.controller.UserPatchRequest;
@@ -37,19 +38,17 @@ public class UserService {
         User user =  userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
 
-        if(!authentication.getName().equals(user.getUsername()) &&
-                !isAdmin) {
+        if(!authentication.getName().equals(user.getUsername()) && !isAdmin) {
             throw new IllegalArgumentException("Insufficient permission.");
         }
-
-        if(request.getRole() != null &&
-                isAdmin) user.setRole(request.getRole());
+        if(request.getRole() != null && isAdmin) user.setRole(request.getRole());
         if(request.getEmail() != null) user.setEmail(request.getEmail());
         if(request.getPassword() != null) user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUser(UserDeleteRequest request, Authentication authentication) {
         final String username = request.getUsername();
 
