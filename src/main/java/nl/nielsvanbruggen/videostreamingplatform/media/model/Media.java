@@ -36,7 +36,7 @@ public class Media {
     private int year;
     @Enumerated(EnumType.STRING)
     private Type type;
-    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
     private List<Video> videos;
     @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
     private List<MediaGenre> genres;

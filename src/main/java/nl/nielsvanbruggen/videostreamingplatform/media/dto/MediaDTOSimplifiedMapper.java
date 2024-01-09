@@ -3,6 +3,7 @@ package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
 import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
@@ -23,6 +24,7 @@ public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
     private final VideoDTOMapper videoDTOMapper;
     private final RatingDTOMapper ratingDTOMapper;
     private final ReviewDTOMapper reviewDTOMapper;
+    private final VideoRepository videoRepository;
     private final WatchedRepository watchedRepository;
 
     @Override
@@ -45,9 +47,8 @@ public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
                         .map(MediaActor::getActor)
                         .map(actorDTOMapper)
                         .collect(Collectors.toList()))
-                .videoCount(media.getVideos().size())
-                .videos(media.getVideos().stream()
-                        .limit(1)
+                .videoCount(videoRepository.countByMedia(media))
+                .videos(videoRepository.findFirstByMedia(media).stream()
                         .map(videoDTOMapper)
                         .collect(Collectors.toList()))
                 .ratings(media.getRatings().stream()
@@ -57,6 +58,10 @@ public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
                         .map(reviewDTOMapper)
                         .collect(Collectors.toList()))
                 .views(watchedRepository.totalUniqueViewsByMedia(media))
+                .avgRating(media.getRatings().stream()
+                        .mapToDouble(Rating::getScore)
+                        .average()
+                        .orElse(-1D))
                 .build();
     }
 }

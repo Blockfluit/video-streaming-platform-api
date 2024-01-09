@@ -15,7 +15,6 @@ import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepositor
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
 import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -54,13 +53,13 @@ public class RecommendationService {
         updateRecommendations();
     }
 
-    @Scheduled(cron = "0 20 0 * * *")
+    @Scheduled(cron = "0 10 0/1 1/1 * *")
     public void updateRecommendations() {
         userRepository.findAll()
                 .forEach(user -> recommendations.put(user.getUsername(), createRecommendations(user)));
     }
 
-    @Scheduled(cron = "0 10 0 * * *")
+    @Scheduled(cron = "0 5 0/1 1/1 * *")
     public void updateMediaGenreMap() {
         List<MediaGenre> mediaGenreList = mediaGenreRepository.findAll();
         mediaGenreList.stream()
@@ -71,7 +70,7 @@ public class RecommendationService {
                         .toList()));
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 0/1 1/1 * *")
     public void updateMediaActorMap() {
         List<MediaActor> mediaActorList = mediaActorRepository.findAll();
         mediaActorList.stream()

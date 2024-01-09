@@ -1,11 +1,13 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.service;
 
+import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.controller.UserDeleteRequest;
 import nl.nielsvanbruggen.videostreamingplatform.user.controller.UserPatchRequest;
 import nl.nielsvanbruggen.videostreamingplatform.user.dto.UserDTO;
 import nl.nielsvanbruggen.videostreamingplatform.user.dto.UserDTOMapper;
+import nl.nielsvanbruggen.videostreamingplatform.user.exception.UserNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
@@ -25,6 +27,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserDTOMapper userDTOMapper;
+
+    public User getUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User with id: " + id + " does not exist."));
+    }
+
+    public User getUser(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User with name: " + username + " does not exist."));
+    }
 
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()

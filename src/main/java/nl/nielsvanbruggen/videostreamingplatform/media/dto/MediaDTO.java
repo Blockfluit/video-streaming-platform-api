@@ -31,4 +31,5 @@ public class MediaDTO {
     private List<ReviewDTO> reviews;
     private int views;
     private List<RatingDTO> ratings;
+    private double avgRating;
 }

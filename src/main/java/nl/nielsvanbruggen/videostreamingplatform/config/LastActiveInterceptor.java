@@ -23,7 +23,6 @@ public class LastActiveInterceptor implements HandlerInterceptor {
         if(authentication != null &&
                 !authentication.getName().equals("anonymousUser")) {
             userActivityService.recordUserActivity(authentication);
-            //Todo: register activity in database.
         }
         return true;
     }

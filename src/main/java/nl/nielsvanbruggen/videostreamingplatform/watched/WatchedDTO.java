@@ -7,7 +7,7 @@ public record WatchedDTO(
         String name,
         int index,
         int season,
-        float timestamp,
+        double timestamp,
         long mediaId,
         Instant updatedAt,
         double duration

@@ -3,6 +3,7 @@ package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
 import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
@@ -52,6 +53,10 @@ public class MediaDTOMapper implements Function<Media, MediaDTO> {
                         .map(reviewDTOMapper)
                         .collect(Collectors.toList()))
                 .views(watchedRepository.totalUniqueViewsByMedia(media))
+                .avgRating(media.getRatings().stream()
+                        .mapToDouble(Rating::getScore)
+                        .average()
+                        .orElse(-1D))
                 .build();
     }
 }

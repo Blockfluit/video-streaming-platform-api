@@ -2,13 +2,17 @@ package nl.nielsvanbruggen.videostreamingplatform.media.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
 import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,24 +32,39 @@ public class MediaController {
     @GetMapping("/")
     public ResponseEntity<Page<MediaDTO>> getAllMedia(@RequestParam int pagenumber,
                                                       @RequestParam int pagesize,
-                                                      @RequestParam(required = false, defaultValue = "") String search,
-                                                      @RequestParam(defaultValue = "false") boolean complete) {
-        return new ResponseEntity<>(mediaService.getAllMedia(pagenumber, pagesize, search, complete), HttpStatus.OK);
+                                                      @RequestParam(required = false, defaultValue = "") String type,
+                                                      @RequestParam(required = false, defaultValue = "") List<String> genres,
+                                                      @RequestParam(required = false, defaultValue = "") String search) {
+        return new ResponseEntity<>(mediaService.getAllMedia(pagenumber, pagesize, type, genres, search), HttpStatus.OK);
     }
 
     @GetMapping("/best-rated")
-    public ResponseEntity<Page<MediaDTO>> getBestRated(@RequestParam int pagenumber, @RequestParam int pagesize) {
-        return new ResponseEntity<>(mediaService.getBestRated(pagenumber, pagesize), HttpStatus.OK);
+    public ResponseEntity<Page<MediaDTO>> getBestRated(@RequestParam int pagenumber,
+                                                       @RequestParam int pagesize,
+                                                       @RequestParam(required = false, defaultValue = "") String type) {
+        return new ResponseEntity<>(mediaService.getBestRated(pagenumber, pagesize, type), HttpStatus.OK);
     }
 
     @GetMapping("/most-watched")
-    public ResponseEntity<Page<MediaDTO>> getMostWatched(@RequestParam int pagenumber, @RequestParam int pagesize) {
-        return new ResponseEntity<>(mediaService.getMostWatched(pagenumber, pagesize), HttpStatus.OK);
+    public ResponseEntity<Page<MediaDTO>> getMostWatched(@RequestParam int pagenumber,
+                                                         @RequestParam int pagesize,
+                                                         @RequestParam(required = false, defaultValue = "") String type) {
+        return new ResponseEntity<>(mediaService.getMostWatched(pagenumber, pagesize, type), HttpStatus.OK);
     }
 
     @GetMapping("/last-watched")
-    public ResponseEntity<Page<MediaDTO>> getLastWatched(@RequestParam int pagenumber, @RequestParam int pagesize) {
-        return new ResponseEntity<>(mediaService.getLastWatched(pagenumber, pagesize), HttpStatus.OK);
+    public ResponseEntity<Page<MediaDTO>> getLastWatched(@RequestParam int pagenumber,
+                                                         @RequestParam int pagesize,
+                                                         @RequestParam(required = false, defaultValue = "") String type) {
+        return new ResponseEntity<>(mediaService.getLastWatched(pagenumber, pagesize, type), HttpStatus.OK);
+    }
+
+    @GetMapping("/recent-watched")
+    public ResponseEntity<Page<MediaDTO>> getRecentWatched(Authentication authentication,
+                                                           @RequestParam int pagenumber,
+                                                           @RequestParam int pagesize,
+                                                           @RequestParam(required = false, defaultValue = "") String type) {
+        return new ResponseEntity<>(mediaService.getRecentWatched(authentication, pagenumber, pagesize, type), HttpStatus.OK);
     }
 
     @PostMapping("/{id}/rate")
