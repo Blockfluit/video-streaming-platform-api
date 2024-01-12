@@ -2,7 +2,11 @@ package nl.nielsvanbruggen.videostreamingplatform.stream;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.global.util.MimeTypeUtil;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.SubtitleRepository;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,7 +23,9 @@ import java.nio.file.Path;
 @Service
 @RequiredArgsConstructor
 public class StreamService {
-    private final StreamCache streamCache;
+    private final VideoRepository videoRepository;
+    private final MediaRepository mediaRepository;
+    private final SubtitleRepository subtitleRepository;
     private final static int MAX_CHUNK_SIZE_BYTES = 1024 * 1024;
     @Value("${env.thumbnail.root}")
     private String thumbnailRoot;
@@ -28,29 +34,37 @@ public class StreamService {
     @Value("${env.videos.root}")
     private String videosRoot;
 
-    public ResponseEntity<?> getVideo(long id, HttpHeaders headers) {
-        String path = streamCache.getVideoPath(id);
+    public ResponseEntity<?> getVideo(long videoId, HttpHeaders headers) {
+        String path = videoRepository.findById(videoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Video with given id does not exist."))
+                .getPath();
         String absolutePath = videosRoot + "/" + path;
 
         return createStreamResponseEntity(Path.of(absolutePath), headers);
     }
 
-    public ResponseEntity<?> getSubtitle(long id) {
-        String path = streamCache.getSubtitlePath(id);
+    public ResponseEntity<?> getSubtitle(long videoId) {
+        String path = subtitleRepository.findById(videoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Subtitle with given id does not exist."))
+                .getPath();
         String absolutePath = videosRoot + "/" + path;
 
         return createFullResponseEntity(Path.of(absolutePath));
     }
 
-    public ResponseEntity<?> getThumbnail(long id) {
-        String path = streamCache.getThumbnailPath(id);
+    public ResponseEntity<?> getThumbnail(long mediaId) {
+        String path = mediaRepository.findById(mediaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Thumbnail with given id does not exist."))
+                .getThumbnail();
         String absolutePath = thumbnailRoot + "/" + path;
 
         return createFullResponseEntity(Path.of(absolutePath));
     }
 
-    public ResponseEntity<?> getSnapshot(long id) {
-        String path = streamCache.getSnapshotPath(id);
+    public ResponseEntity<?> getSnapshot(long videoId) {
+        String path = videoRepository.findById(videoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Snapshot with given id does not exist."))
+                .getSnapshot();
         String absolutePath = snapshotRoot + "/" + path;
 
         return createFullResponseEntity(Path.of(absolutePath));
@@ -99,7 +113,7 @@ public class StreamService {
         responseHeaders.add("Accept-Ranges", "bytes");
         responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
         responseHeaders.add("Content-Length", Long.toString(tot));
-        responseHeaders.add("Cache-Control", "no-cache");
+        responseHeaders.add("Cache-Control", "no-store, no-cache");
 
         return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
     }
@@ -112,7 +126,7 @@ public class StreamService {
         responseHeaders.add("Accept-Ranges", "bytes");
         responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
         responseHeaders.add("Content-Length", Long.toString(bytes.length));
-        responseHeaders.add("Cache-Control", "public, max-age=3600");
+        responseHeaders.add("Cache-Control", "no-store, no-cache");
 
         return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.PARTIAL_CONTENT);
     }

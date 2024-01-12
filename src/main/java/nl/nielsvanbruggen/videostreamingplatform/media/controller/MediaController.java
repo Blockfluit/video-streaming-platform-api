@@ -38,6 +38,13 @@ public class MediaController {
         return new ResponseEntity<>(mediaService.getAllMedia(pagenumber, pagesize, type, genres, search), HttpStatus.OK);
     }
 
+    @GetMapping("/recent-uploaded")
+    public ResponseEntity<Page<MediaDTO>> getRecentUploaded(@RequestParam int pagenumber,
+                                                            @RequestParam int pagesize,
+                                                            @RequestParam(required = false, defaultValue = "") String type) {
+        return new ResponseEntity<>(mediaService.getRecentUploaded(pagenumber, pagesize, type), HttpStatus.OK);
+    }
+
     @GetMapping("/best-rated")
     public ResponseEntity<Page<MediaDTO>> getBestRated(@RequestParam int pagenumber,
                                                        @RequestParam int pagesize,

@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,7 +69,6 @@ public class MediaService {
     @Scheduled(cron = "0 0/15 * 1/1 * *")
     @Caching(evict = {
             @CacheEvict(value = "allMedia", allEntries = true),
-            @CacheEvict(value = "media", allEntries = true),
             @CacheEvict(value = "bestRatedMedia", allEntries = true),
             @CacheEvict(value = "mostWatchedMedia", allEntries = true),
             @CacheEvict(value = "lastWatchedMedia", allEntries = true)
@@ -77,7 +77,6 @@ public class MediaService {
         log.debug("Cleared all media cache.");
     }
 
-    @Cacheable(value = "media", key = "#id")
     public MediaDTO getMedia(int id) {
         return mediaRepository.findById((long) id)
                 .map(mediaDTOMapper)
@@ -93,6 +92,12 @@ public class MediaService {
                         .toList();
 
         return mediaRepository.findAllByPartialName(search, type, queryGenres, PageRequest.of(pageNumber, pageSize))
+                .map(mediaDTOSimplifiedMapper);
+    }
+
+    @Cacheable(value = "recentUploadedMedia")
+    public Page<MediaDTO> getRecentUploaded(int pageNumber, int pageSize, String type) {
+        return mediaRepository.findAllRecentUploaded(type, Instant.now().minus(7, ChronoUnit.DAYS), PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
@@ -198,10 +203,7 @@ public class MediaService {
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "allMedia", allEntries = true),
-            @CacheEvict(value = "media", key = "#id")
-    })
+    @CacheEvict(value = "allMedia", allEntries = true)
     public void patchMedia(Long id, MediaPatchRequest request) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
@@ -318,10 +320,7 @@ public class MediaService {
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "allMedia", allEntries = true),
-            @CacheEvict(value = "media", key = "#id")
-    })
+    @CacheEvict(value = "allMedia", allEntries = true)
     public void deleteMedia(Long id) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
