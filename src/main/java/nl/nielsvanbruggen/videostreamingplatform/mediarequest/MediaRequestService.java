@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -20,10 +22,9 @@ public class MediaRequestService {
     private final UserRepository userRepository;
     private final MediaRequestDTOMapper mediaRequestDTOMapper;
 
-    public List<MediaRequestDTO> getMediaRequest() {
-        return mediaRequestRepository.findAll().stream()
-                .map(mediaRequestDTOMapper)
-                .collect(Collectors.toList());
+    public Page<MediaRequestDTO> getAllMediaRequests(int pagenumber, int pagesize, String search) {
+        return mediaRequestRepository.findAll(search, PageRequest.of(pagenumber, pagesize))
+                .map(mediaRequestDTOMapper);
     }
 
     public void postMediaRequest(MediaRequestPostRequest request, Authentication authentication) {

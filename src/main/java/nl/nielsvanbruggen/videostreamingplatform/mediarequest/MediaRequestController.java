@@ -2,6 +2,7 @@ package nl.nielsvanbruggen.videostreamingplatform.mediarequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,8 +17,10 @@ public class MediaRequestController {
     private final MediaRequestService mediaRequestService;
 
     @GetMapping
-    public ResponseEntity<List<MediaRequestDTO>> getMediaRequest() {
-        return new ResponseEntity<>(mediaRequestService.getMediaRequest(), HttpStatus.OK);
+    public ResponseEntity<Page<MediaRequestDTO>> getMediaRequest(@RequestParam int pagenumber,
+                                                                 @RequestParam int pagesize,
+                                                                 @RequestParam String search) {
+        return new ResponseEntity<>(mediaRequestService.getAllMediaRequests(pagenumber, pagesize, search), HttpStatus.OK);
     }
 
     @PostMapping

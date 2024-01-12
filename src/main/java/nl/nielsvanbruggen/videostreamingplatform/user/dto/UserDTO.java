@@ -1,16 +1,18 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.dto;
 
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
+import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedDTO;
 
 import java.time.Instant;
+import java.util.List;
 
 public record UserDTO(
         long id,
         String username,
-        String email,
         Role role,
         Instant lastActiveAt,
         Instant lastLoginAt,
-        Instant createdAt
+        Instant createdAt,
+        List<WatchedDTO> lastWatched
 ) {
 }

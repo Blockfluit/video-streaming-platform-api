@@ -18,6 +18,11 @@ public class ActorService {
     }
 
     public void postActor(ActorPostRequest actorPostRequest) {
+        actorRepository.findByFirstnameAndLastname(actorPostRequest.getFirstname(), actorPostRequest.getLastname())
+                .ifPresent((actor) -> {
+                    throw new IllegalArgumentException("actor already exists");
+                });
+
         Actor actor = Actor.builder()
                 .firstname(actorPostRequest.getFirstname())
                 .lastname(actorPostRequest.getLastname())

@@ -1,21 +1,48 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.service;
 
+import com.sun.jdi.InternalException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.controller.UserDeleteRequest;
 import nl.nielsvanbruggen.videostreamingplatform.user.controller.UserPatchRequest;
+import nl.nielsvanbruggen.videostreamingplatform.user.dto.UserDTO;
+import nl.nielsvanbruggen.videostreamingplatform.user.dto.UserDTOMapper;
+import nl.nielsvanbruggen.videostreamingplatform.user.exception.UserNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserDTOMapper userDTOMapper;
+
+    public User getUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User with id: " + id + " does not exist."));
+    }
+
+    public User getUser(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User with name: " + username + " does not exist."));
+    }
+
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(userDTOMapper)
+                .collect(Collectors.toList());
+    }
 
     public void patchUser(UserPatchRequest request, Authentication authentication) {
         final boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()));
@@ -23,19 +50,17 @@ public class UserService {
         User user =  userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
 
-        if(!authentication.getName().equals(user.getUsername()) &&
-                !isAdmin) {
+        if(!authentication.getName().equals(user.getUsername()) && !isAdmin) {
             throw new IllegalArgumentException("Insufficient permission.");
         }
-
-        if(request.getRole() != null &&
-                isAdmin) user.setRole(request.getRole());
+        if(request.getRole() != null && isAdmin) user.setRole(request.getRole());
         if(request.getEmail() != null) user.setEmail(request.getEmail());
         if(request.getPassword() != null) user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUser(UserDeleteRequest request, Authentication authentication) {
         final String username = request.getUsername();
 

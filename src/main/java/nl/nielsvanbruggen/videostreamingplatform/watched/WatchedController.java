@@ -14,8 +14,12 @@ public class WatchedController {
     private final WatchedService watchedService;
 
     @GetMapping
-    public ResponseEntity<?> getWatched(Authentication authentication) {
-        return new ResponseEntity<>(watchedService.getWatched(authentication), HttpStatus.OK);
+    public ResponseEntity<WatchedGetResponse> getAllWatched(Authentication authentication) {
+        WatchedGetResponse response = WatchedGetResponse.builder()
+                .allWatched(watchedService.getAllWatched(authentication))
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping

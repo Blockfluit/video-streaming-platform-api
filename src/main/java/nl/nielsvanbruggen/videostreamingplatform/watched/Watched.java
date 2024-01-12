@@ -25,7 +25,7 @@ public class Watched {
     @ManyToOne
     @JoinColumn(name = "video_id")
     private Video video;
-    private float timestamp;
+    private double timestamp;
     @Column(name = "updated_at")
     private Instant updatedAt;
     @Column(name = "created_at")

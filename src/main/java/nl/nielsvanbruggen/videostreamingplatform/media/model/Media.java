@@ -5,8 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTO;
+import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
+import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.RatingDTO;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.ReviewDTO;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.VideoDTO;
 
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder
@@ -29,4 +36,21 @@ public class Media {
     private int year;
     @Enumerated(EnumType.STRING)
     private Type type;
+    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
+    private List<Video> videos;
+    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
+    private List<MediaGenre> genres;
+    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
+    private List<MediaActor> actors;
+    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
+    private List<Review> reviews;
+    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
+    private List<Rating> ratings;
+
+    @Override
+    public boolean equals(Object object) {
+        if(object == null) return false;
+        if(!(object instanceof Media media)) return false;
+        return media.getId() == this.getId();
+    }
 }

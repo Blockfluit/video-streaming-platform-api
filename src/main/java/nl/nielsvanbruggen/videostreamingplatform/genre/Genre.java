@@ -14,5 +14,5 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Genre {
     @Id
-    public String name;
+    private String name;
 }

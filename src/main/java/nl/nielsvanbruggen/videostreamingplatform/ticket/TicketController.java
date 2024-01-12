@@ -17,8 +17,12 @@ public class TicketController {
     private final TicketService ticketService;
 
     @GetMapping
-    public ResponseEntity<List<TicketDTO>> getTickets(Authentication authentication) {
-        return new ResponseEntity<>(ticketService.getTickets(authentication), HttpStatus.OK);
+    public ResponseEntity<AllTicketsGetResponse> getAllTickets(Authentication authentication) {
+        AllTicketsGetResponse response = AllTicketsGetResponse.builder()
+                .allTickets(ticketService.getAllTickets(authentication))
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping

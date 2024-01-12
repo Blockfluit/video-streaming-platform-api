@@ -1,8 +1,14 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.service;
 
 import com.sun.jdi.InternalException;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.*;
+import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
@@ -13,38 +19,40 @@ import nl.nielsvanbruggen.videostreamingplatform.genre.GenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.controller.*;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOGeneral;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOGeneralMapper;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSpecificMapper;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.global.service.VideoService;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Review;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.global.service.ImageService;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.*;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@EnableCaching
+@Slf4j
 public class MediaService {
     private final VideoRepository videoRepository;
     private final RatingRepository ratingRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final MediaRepository mediaRepository;
     private final GenreRepository genreRepository;
     private final ActorRepository actorRepository;
@@ -53,40 +61,76 @@ public class MediaService {
     private final SubtitleRepository subtitleRepository;
     private final MediaGenreRepository mediaGenreRepository;
     private final MediaActorRepository mediaActorRepository;
-    private final MediaDTOGeneralMapper mediaDTOGeneralMapper;
-    private final MediaDTOSpecificMapper mediaDTOSpecificMapper;
+    private final MediaDTOMapper mediaDTOMapper;
+    private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
     private final VideoService videoService;
     private final ImageService imageService;
-    @Value("${env.videos.root}")
-    private String videosRoot;
-    @Value("${env.ffprobe.path}")
-    private String ffprobePath;
-    private static List<MediaDTOGeneral> allMedia = new ArrayList<>();
 
-    public List<?> getMedia(Long id, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        user.setLastActiveAt(Instant.now());
-        userRepository.save(user);
+    @Scheduled(cron = "0 0/15 * 1/1 * *")
+    @Caching(evict = {
+            @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "bestRatedMedia", allEntries = true),
+            @CacheEvict(value = "mostWatchedMedia", allEntries = true),
+            @CacheEvict(value = "lastWatchedMedia", allEntries = true)
+    })
+    public void deleteAllMediaCache() {
+        log.debug("Cleared all media cache.");
+    }
 
-        if(id != null) {
-            return List.of(mediaRepository.findById(id)
-                    .map(mediaDTOSpecificMapper)
-                    .orElseThrow(() -> new IllegalArgumentException("Id does not exist.")));
-        }
+    public MediaDTO getMedia(int id) {
+        return mediaRepository.findById((long) id)
+                .map(mediaDTOMapper)
+                .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
+    }
 
-        if(allMedia.isEmpty()) {
-            updateAllMedia();
-        }
-        return allMedia;
+    @Cacheable(value = "allMedia", condition = "#search == ''")
+    public Page<MediaDTO> getAllMedia(int pageNumber, int pageSize, String type, List<String> genres, String search) {
+        List<Genre> queryGenres = genres.isEmpty() ?
+                genreRepository.findAll() :
+                genres.stream()
+                        .map(Genre::new)
+                        .toList();
+
+        return mediaRepository.findAllByPartialName(search, type, queryGenres, PageRequest.of(pageNumber, pageSize))
+                .map(mediaDTOSimplifiedMapper);
+    }
+
+    @Cacheable(value = "recentUploadedMedia")
+    public Page<MediaDTO> getRecentUploaded(int pageNumber, int pageSize, String type) {
+        return mediaRepository.findAllRecentUploaded(type, Instant.now().minus(7, ChronoUnit.DAYS), PageRequest.of(pageNumber, pageSize))
+                .map(mediaDTOSimplifiedMapper);
+    }
+
+    @Cacheable(value = "bestRatedMedia")
+    public Page<MediaDTO> getBestRated(int pageNumber, int pageSize, String type) {
+        return mediaRepository.findAllBestRated(type, PageRequest.of(pageNumber, pageSize))
+                .map(mediaDTOSimplifiedMapper);
+    }
+
+    @Cacheable(value = "mostWatchedMedia")
+    public Page<MediaDTO> getMostWatched(int pageNumber, int pageSize, String type) {
+        return mediaRepository.findAllMostWatched(type, PageRequest.of(pageNumber, pageSize))
+                .map(mediaDTOSimplifiedMapper);
+    }
+
+    @Cacheable(value = "lastWatchedMedia")
+    public Page<MediaDTO> getLastWatched(int pageNumber, int pageSize, String type) {
+         return mediaRepository.findAllLastWatched(type, PageRequest.of(pageNumber, pageSize))
+                 .map(mediaDTOSimplifiedMapper);
+    }
+
+    public Page<MediaDTO> getRecentWatched(Authentication authentication, int pageNumber, int pageSize, String type) {
+        User user = userService.getUser(authentication.getName());
+
+        return mediaRepository.findAllRecentWatched(user, type, PageRequest.of(pageNumber, pageSize))
+                .map(mediaDTOSimplifiedMapper);
     }
 
     public void postRating(Long id, RatingPostRequest request, Authentication authentication) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
 
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+        User user = userService.getUser(authentication.getName());
 
         Rating rating = Rating.builder()
                 .media(media)
@@ -95,7 +139,6 @@ public class MediaService {
                 .build();
 
         ratingRepository.save(rating);
-        updateAllMedia();
     }
 
     public void postReview(Long id, ReviewPostRequest request, Authentication authentication) {
@@ -107,8 +150,7 @@ public class MediaService {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
 
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+        User user = userService.getUser(authentication.getName());
 
         Review review = Review.builder()
                 .media(media)
@@ -120,7 +162,6 @@ public class MediaService {
                 .build();
 
         reviewRepository.save(review);
-        updateAllMedia();
     }
 
     public void patchReview(Long id, ReviewPatchRequest request, Authentication authentication) {
@@ -132,8 +173,7 @@ public class MediaService {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
 
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+        User user = userService.getUser(authentication.getName());
 
         Review review = reviewRepository.findById(request.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Review does not exist"));
@@ -146,12 +186,10 @@ public class MediaService {
         review.setComment(request.getComment());
 
         reviewRepository.save(review);
-        updateAllMedia();
     }
 
     public void deleteReview(Long id, ReviewDeleteRequest request, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+        User user = userService.getUser(authentication.getName());
 
         Review review = reviewRepository.findById(request.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Review does not exist"));
@@ -162,11 +200,11 @@ public class MediaService {
         }
 
         reviewRepository.delete(review);
-        updateAllMedia();
     }
 
+    @Transactional
+    @CacheEvict(value = "allMedia", allEntries = true)
     public void patchMedia(Long id, MediaPatchRequest request) {
-        // TODO: add logic for updating media
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
 
@@ -179,12 +217,24 @@ public class MediaService {
             if (genres.size() < request.getGenres().size()) {
                 throw new IllegalArgumentException("Not all genres exist in the database.");
             }
+            List<MediaGenre> mediaGenres = genres.stream()
+                    .map(genre -> new MediaGenre(media, genre))
+                    .toList();
+
+            mediaGenreRepository.deleteByMedia(media);
+            mediaGenreRepository.saveAll(mediaGenres);
         }
         if(request.getActors() != null) {
             List<Actor> actors = actorRepository.findAllById(request.getActors());
             if (actors.size() < request.getActors().size()) {
                 throw new IllegalArgumentException("Not all actors exist in the database.");
             }
+            List<MediaActor> mediaActors = actorRepository.findAllById(request.getActors()).stream()
+                    .map(actor -> new MediaActor(media, actor))
+                    .toList();
+
+            mediaActorRepository.deleteByMedia(media);
+            mediaActorRepository.saveAll(mediaActors);
         }
         if(request.getThumbnail() != null) {
             String imageName = media.getName() + "_" + media.getYear() + ".jpg";
@@ -195,11 +245,12 @@ public class MediaService {
             }
         }
         if(request.getOrder() != null) {
-            request.getOrder().forEach(entry -> {
-                Video video = videoRepository.findById(entry.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("Video does not exist."));
-                video.setIndex(entry.getIndex());
-                videoRepository.save(video);
+            request.getOrder()
+                    .forEach(entry -> {
+                        Video video = videoRepository.findById(entry.getId())
+                                .orElseThrow(() -> new IllegalArgumentException("Video does not exist."));
+                        video.setIndex(entry.getIndex());
+                        videoRepository.save(video);
             });
         }
 
@@ -213,9 +264,10 @@ public class MediaService {
 
         media.setUpdatedAt(Instant.now());
         mediaRepository.save(media);
-        updateAllMedia();
     }
 
+
+    @CacheEvict(value = "allMedia", allEntries = true)
     public void postMedia(MediaPostRequest request) {
         if(request.getThumbnail() == null) {
             throw new IllegalArgumentException("No thumbnail provided.");
@@ -265,10 +317,10 @@ public class MediaService {
         }
         genres.forEach(genre -> mediaGenreRepository.save(new MediaGenre(media, genre)));
         actors.forEach(actor -> mediaActorRepository.save(new MediaActor(media, actor)));
-        updateAllMedia();
     }
 
     @Transactional
+    @CacheEvict(value = "allMedia", allEntries = true)
     public void deleteMedia(Long id) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
@@ -284,12 +336,5 @@ public class MediaService {
 
         videoRepository.deleteAll(videos);
         mediaRepository.delete(media);
-        updateAllMedia();
-    }
-
-    public void updateAllMedia() {
-        allMedia = mediaRepository.findAll().stream()
-                .map(mediaDTOGeneralMapper)
-                .collect(Collectors.toList());
     }
 }
