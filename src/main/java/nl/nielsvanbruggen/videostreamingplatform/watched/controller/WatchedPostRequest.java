@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched.controller;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

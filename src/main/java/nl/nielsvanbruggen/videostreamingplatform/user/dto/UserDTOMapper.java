@@ -2,14 +2,11 @@ package nl.nielsvanbruggen.videostreamingplatform.user.dto;
 
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
-import nl.nielsvanbruggen.videostreamingplatform.watched.Watched;
-import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedDTOMapper;
-import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
-import org.hibernate.query.spi.Limit;
+import nl.nielsvanbruggen.videostreamingplatform.watched.dto.WatchedDTOMapper;
+import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 

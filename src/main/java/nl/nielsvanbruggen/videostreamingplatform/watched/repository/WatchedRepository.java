@@ -1,11 +1,11 @@
-package nl.nielsvanbruggen.videostreamingplatform.watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched.repository;
 
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
-import org.hibernate.query.spi.Limit;
+import nl.nielsvanbruggen.videostreamingplatform.watched.model.Watched;
+import nl.nielsvanbruggen.videostreamingplatform.watched.id.WatchedId;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

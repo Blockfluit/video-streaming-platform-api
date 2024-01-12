@@ -1,7 +1,8 @@
-package nl.nielsvanbruggen.videostreamingplatform.watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.watched.service.WatchedService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched.id;
 
 import jakarta.persistence.Embeddable;
 import lombok.Data;

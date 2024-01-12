@@ -4,13 +4,10 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
-import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
+import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
-import nl.nielsvanbruggen.videostreamingplatform.actor.repository.MediaActorRepository;
-import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +42,6 @@ public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
                         .collect(Collectors.toList()))
                 .actors(media.getActors().stream()
                         .map(MediaActor::getActor)
-                        .map(actorDTOMapper)
                         .collect(Collectors.toList()))
                 .videoCount(videoRepository.countByMedia(media))
                 .videos(videoRepository.findFirstByMedia(media).stream()

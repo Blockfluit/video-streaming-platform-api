@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface MediaGenreRepository extends JpaRepository<MediaGenre, MediaGenreId> {
     List<MediaGenre> findAllByMedia(Media media);
+
     List<MediaGenre> deleteByMedia(Media media);
 }

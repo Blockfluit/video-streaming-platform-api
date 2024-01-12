@@ -1,7 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.dto;
 
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
-import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedDTO;
+import nl.nielsvanbruggen.videostreamingplatform.watched.dto.WatchedDTO;
 
 import java.time.Instant;
 import java.util.List;

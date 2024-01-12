@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import nl.nielsvanbruggen.videostreamingplatform.watched.id.WatchedId;
 
 import java.time.Instant;
 

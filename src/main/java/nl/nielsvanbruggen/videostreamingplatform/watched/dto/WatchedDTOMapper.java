@@ -1,5 +1,6 @@
-package nl.nielsvanbruggen.videostreamingplatform.watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched.dto;
 
+import nl.nielsvanbruggen.videostreamingplatform.watched.model.Watched;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Function;

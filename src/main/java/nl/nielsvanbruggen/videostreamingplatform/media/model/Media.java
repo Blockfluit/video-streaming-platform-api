@@ -5,12 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTO;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.RatingDTO;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.ReviewDTO;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.VideoDTO;
 
 import java.time.Instant;
 import java.util.List;

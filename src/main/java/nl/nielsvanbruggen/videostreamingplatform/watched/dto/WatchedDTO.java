@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.watched;
+package nl.nielsvanbruggen.videostreamingplatform.watched.dto;
 
 import java.time.Instant;
 

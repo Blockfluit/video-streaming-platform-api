@@ -9,5 +9,6 @@ import java.util.List;
 
 public interface MediaActorRepository extends JpaRepository<MediaActor, MediaActorId> {
     List<MediaActor> findAllByMedia(Media media);
+
     List<MediaActor> deleteByMedia(Media media);
 }
