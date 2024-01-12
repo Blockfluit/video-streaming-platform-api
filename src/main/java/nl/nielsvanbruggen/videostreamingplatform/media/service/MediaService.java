@@ -119,7 +119,7 @@ public class MediaService {
     public Page<MediaDTO> getRecentWatched(Authentication authentication, int pageNumber, int pageSize, String type) {
         User user = userService.getUser(authentication.getName());
 
-        return mediaRepository.findAllRecentWatched(user, type, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findRecentWatched(user, type, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
