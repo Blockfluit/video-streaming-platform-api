@@ -5,8 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.global.util.MimeTypeUtil;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.SubtitleRepository;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,16 +35,14 @@ public class StreamService {
     @Value("${env.videos.root}")
     private String videosRoot;
 
-    public ResponseEntity<?> getVideo(long videoId, HttpHeaders headers) {
-        String path = videoRepository.findById(videoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Video with given id does not exist."))
-                .getPath();
+    public ResponseEntity<?> getVideo(Video video, HttpHeaders headers) {
+        String path = video.getPath();
         String absolutePath = videosRoot + "/" + path;
 
         return createStreamResponseEntity(Path.of(absolutePath), headers);
     }
 
-    public ResponseEntity<?> getSubtitle(long videoId) {
+    public ResponseEntity<byte[]> getSubtitle(long videoId) {
         String path = subtitleRepository.findById(videoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Subtitle with given id does not exist."))
                 .getPath();
@@ -52,7 +51,7 @@ public class StreamService {
         return createFullResponseEntity(Path.of(absolutePath));
     }
 
-    public ResponseEntity<?> getThumbnail(long mediaId) {
+    public ResponseEntity<byte[]> getThumbnail(long mediaId) {
         String path = mediaRepository.findById(mediaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Thumbnail with given id does not exist."))
                 .getThumbnail();
@@ -61,7 +60,7 @@ public class StreamService {
         return createFullResponseEntity(Path.of(absolutePath));
     }
 
-    public ResponseEntity<?> getSnapshot(long videoId) {
+    public ResponseEntity<byte[]> getSnapshot(long videoId) {
         String path = videoRepository.findById(videoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Snapshot with given id does not exist."))
                 .getSnapshot();

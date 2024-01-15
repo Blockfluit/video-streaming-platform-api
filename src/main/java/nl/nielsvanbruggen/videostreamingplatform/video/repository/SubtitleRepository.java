@@ -1,7 +1,7 @@
-package nl.nielsvanbruggen.videostreamingplatform.media.repository;
+package nl.nielsvanbruggen.videostreamingplatform.video.repository;
 
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Subtitle;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;

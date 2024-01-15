@@ -1,8 +1,8 @@
 package nl.nielsvanbruggen.videostreamingplatform.watched.service;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
 import nl.nielsvanbruggen.videostreamingplatform.watched.model.Watched;

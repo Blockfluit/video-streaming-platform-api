@@ -41,7 +41,7 @@ public class InviteTokenService {
                 .orElseThrow();
 
         InviteToken token = InviteToken.builder()
-                .token(TokenGeneratorUtil.generate(64))
+                .token(TokenGeneratorUtil.generate(254))
                 .expiration(inviteTokenPostRequest.getExpiration())
                 .used(false)
                 .master(inviteTokenPostRequest.isMaster())

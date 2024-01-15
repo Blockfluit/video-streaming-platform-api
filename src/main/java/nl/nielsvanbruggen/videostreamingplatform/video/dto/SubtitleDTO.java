@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.media.dto;
+package nl.nielsvanbruggen.videostreamingplatform.video.dto;
 
 public record SubtitleDTO(
         long id,

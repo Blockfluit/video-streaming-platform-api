@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.auth;
+package nl.nielsvanbruggen.videostreamingplatform.auth.controller;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthenticationResponse {
-    private String token;
+    private String accessToken;
+    private String refreshToken;
 }

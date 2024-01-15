@@ -1,7 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.watched.repository;
 
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.watched.model.Watched;
 import nl.nielsvanbruggen.videostreamingplatform.watched.id.WatchedId;

@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.media.model;
+package nl.nielsvanbruggen.videostreamingplatform.video.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

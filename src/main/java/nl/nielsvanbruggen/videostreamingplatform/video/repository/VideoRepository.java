@@ -1,7 +1,7 @@
-package nl.nielsvanbruggen.videostreamingplatform.media.repository;
+package nl.nielsvanbruggen.videostreamingplatform.video.repository;
 
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

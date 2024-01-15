@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.auth;
+package nl.nielsvanbruggen.videostreamingplatform.auth.controller;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

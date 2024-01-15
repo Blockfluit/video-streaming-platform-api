@@ -1,6 +1,6 @@
-package nl.nielsvanbruggen.videostreamingplatform.media.dto;
+package nl.nielsvanbruggen.videostreamingplatform.video.dto;
 
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Subtitle;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Function;

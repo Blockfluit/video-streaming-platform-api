@@ -1,10 +1,14 @@
-package nl.nielsvanbruggen.videostreamingplatform.auth;
+package nl.nielsvanbruggen.videostreamingplatform.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.auth.controller.AuthenticationRequest;
+import nl.nielsvanbruggen.videostreamingplatform.auth.controller.RegisterRequest;
 import nl.nielsvanbruggen.videostreamingplatform.config.JwtService;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.AlreadyInUseException;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
+import nl.nielsvanbruggen.videostreamingplatform.invitetoken.InviteToken;
 import nl.nielsvanbruggen.videostreamingplatform.invitetoken.InviteTokenRepository;
+import nl.nielsvanbruggen.videostreamingplatform.auth.service.RefreshTokenService;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
@@ -17,8 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +31,9 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthenticationResponse register(RegisterRequest request, String token, Authentication authentication) {
+    public User register(RegisterRequest request, String token, Authentication authentication) {
         if(userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new AlreadyInUseException("Username already in use.");
         }
@@ -38,54 +42,42 @@ public class AuthenticationService {
             throw new AlreadyInUseException("Email already in use.");
         }
 
-        Map<String, Object> extraClaims = new HashMap<>();
+        Optional<InviteToken> inviteToken = inviteTokenRepository.findById(token);
+        Role role;
 
-        if(authentication == null) {
-            inviteTokenRepository.findById(token)
-                .ifPresentOrElse(
-                        (inviteToken) -> {
-                            if(inviteToken.isUsed() &&
-                                    !inviteToken.isMaster()) {
-                                throw new InvalidTokenException("Token already used.");
-                            }
+        if(authentication == null && inviteToken.isPresent()) {
+                if(inviteToken.get().isUsed() &&
+                        !inviteToken.get().isMaster()) {
+                    throw new InvalidTokenException("Token already used.");
+                }
 
-                            if(inviteToken.getExpiration().isBefore(Instant.now())) {
-                                throw new InvalidTokenException("Token expired.");
-                            }
+                if(inviteToken.get().getExpiration().isBefore(Instant.now())) {
+                    throw new InvalidTokenException("Token expired.");
+                }
 
-                            extraClaims.put("role", inviteToken.getRole());
-
-                            inviteToken.setUsed(true);
-                            inviteTokenRepository.save(inviteToken);
-                        },
-                        () -> {
-                            throw new InvalidTokenException("Token does not exist");
-                        }
-                );
+                role = inviteToken.get().getRole();
+                inviteToken.get().setUsed(true);
+                inviteTokenRepository.save(inviteToken.get());
         }
-        if(authentication != null &&
-                authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))) {
-            Role role = request.getRole() == null ? Role.USER: request.getRole();
-            extraClaims.put("role", role);
+        else if(authentication != null && authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))) {
+            role = request.getRole() == null ? Role.USER: request.getRole();
+        }
+        else {
+            throw new InvalidTokenException("Token does not exist");
         }
 
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role((Role) extraClaims.get("role"))
+                .role(role)
                 .lastLoginAt(Instant.now())
                 .createdAt(Instant.now())
                 .build();
-        userRepository.save(user);
-
-        String jwtToken = jwtService.generateToken(extraClaims, user);
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
+        return userRepository.save(user);
     }
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    public User authenticate(AuthenticationRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
@@ -93,11 +85,6 @@ public class AuthenticationService {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("role", user.getRole());
-        String jwtToken = jwtService.generateToken(extraClaims, user);
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
+        return user;
     }
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
+import nl.nielsvanbruggen.videostreamingplatform.video.dto.VideoDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;

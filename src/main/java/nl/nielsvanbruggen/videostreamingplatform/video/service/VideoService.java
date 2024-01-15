@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.global.service;
+package nl.nielsvanbruggen.videostreamingplatform.video.service;
 
 import com.sun.jdi.InternalException;
 import lombok.RequiredArgsConstructor;
@@ -6,10 +6,11 @@ import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Subtitle;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.SubtitleRepository;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.exception.VideoException;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,11 @@ public class VideoService {
     private String ffprobePath;
     @Value("${env.ffmpeg.path}")
     private String ffmpegPath;
+
+    public Video getVideo(long videoId) {
+        return videoRepository.findById(videoId)
+                .orElseThrow(() -> new VideoException(String.format("Video with id: %d does not exist", videoId)));
+    }
 
     public void updateVideos(Media media) throws IOException {
         Path dir = Files.walk(Paths.get(videosRoot), 2, FileVisitOption.FOLLOW_LINKS)

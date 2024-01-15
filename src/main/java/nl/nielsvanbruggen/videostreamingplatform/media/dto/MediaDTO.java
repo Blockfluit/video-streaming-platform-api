@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
+import nl.nielsvanbruggen.videostreamingplatform.video.dto.VideoDTO;
 
 import java.time.Instant;
 import java.util.List;

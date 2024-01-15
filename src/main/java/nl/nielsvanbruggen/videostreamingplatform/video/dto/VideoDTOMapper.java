@@ -1,8 +1,8 @@
-package nl.nielsvanbruggen.videostreamingplatform.media.dto;
+package nl.nielsvanbruggen.videostreamingplatform.video.dto;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Video;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.SubtitleRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Function;

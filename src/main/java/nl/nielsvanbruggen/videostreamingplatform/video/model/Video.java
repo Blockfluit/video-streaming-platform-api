@@ -1,10 +1,11 @@
-package nl.nielsvanbruggen.videostreamingplatform.media.model;
+package nl.nielsvanbruggen.videostreamingplatform.video.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 
 @Data
 @Builder
@@ -22,7 +23,7 @@ public class Video {
     private double duration;
     private int season;
     private String snapshot;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "media_id")
     private Media media;
 }

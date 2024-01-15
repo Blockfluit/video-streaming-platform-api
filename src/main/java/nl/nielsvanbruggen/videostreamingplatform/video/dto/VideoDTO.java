@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.media.dto;
+package nl.nielsvanbruggen.videostreamingplatform.video.dto;
 
 import java.util.List;
 public record VideoDTO(
