@@ -22,10 +22,11 @@ public class StreamController {
     private final VideoService videoService;
     private final UserService userService;
 
-    @GetMapping("/video")
-    public ResponseEntity<?> getVideo(@RequestParam String token, @RequestHeader HttpHeaders headers) {
+    @GetMapping("/video/{id}")
+    public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestParam String token, @RequestHeader HttpHeaders headers) {
         VideoToken videoToken = videoTokenService.getVideoToken(token);
-        if(!videoTokenService.isTokenValid(videoToken)) {
+        Video video = videoService.getVideo(id);
+        if(video.equals(videoToken.getVideo()) && !videoTokenService.isTokenValid(videoToken)) {
             throw new VideoTokenException("Video token is not valid.");
         }
 

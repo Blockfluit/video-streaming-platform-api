@@ -45,7 +45,7 @@ public class AuthenticationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping("refresh-token")
+    @PostMapping("/refresh-token")
     public ResponseEntity<AuthenticationResponse> refreshToken(@RequestParam String token) {
         RefreshToken refreshToken = refreshTokenService.getRefreshToken(token)
                 .orElseThrow(() -> new RefreshTokenException("Token does not exist."));
