@@ -1,19 +1,16 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTO;
+import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
+import nl.nielsvanbruggen.videostreamingplatform.video.dto.VideoDTO;
 
 import java.time.Instant;
 import java.util.List;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class MediaDTO {
     private long id;
     private String name;
@@ -26,7 +23,7 @@ public class MediaDTO {
     private Instant createdAt;
     private int videoCount;
     private List<String> genres;
-    private List<ActorDTO> actors;
+    private List<Actor> actors;
     private List<VideoDTO> videos;
     private List<ReviewDTO> reviews;
     private int views;

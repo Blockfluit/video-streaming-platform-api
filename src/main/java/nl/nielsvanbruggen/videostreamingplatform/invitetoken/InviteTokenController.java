@@ -1,6 +1,9 @@
 package nl.nielsvanbruggen.videostreamingplatform.invitetoken;
 
+import com.sun.jdi.InternalException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.global.exception.ErrorInfo;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.GlobalExceptionHandler;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
 import org.springframework.http.HttpStatus;
@@ -8,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,18 +32,25 @@ public class InviteTokenController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createInviteToken(@RequestBody InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
+    public ResponseEntity<Void> createInviteToken(@RequestBody InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
         inviteTokenService.createInviteToken(inviteTokenPostRequest, authentication);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/{token}")
-    public ResponseEntity<?> deleteInviteToken(@PathVariable String token) {
-        try {
+    public ResponseEntity<Void> deleteInviteToken(@PathVariable String token) {
             inviteTokenService.deleteInviteToken(token);
-            return ResponseEntity.ok().build();
-        } catch(InvalidTokenException ex) {
-            return new ResponseEntity<>(GlobalExceptionHandler.singleMessageToErrorMap(ex.getMessage()), HttpStatus.NOT_FOUND);
-        }
+            return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @ExceptionHandler(InternalException.class)
+    public ResponseEntity<ErrorInfo> handleInvalidTokenException(HttpServletRequest req, InvalidTokenException invalidTokenException) {
+        ErrorInfo info = ErrorInfo.builder()
+                .url(req.getRequestURL().toString())
+                .timestamp(Instant.now())
+                .message(invalidTokenException.getMessage())
+                .build();
+
+        return new ResponseEntity<>(info, HttpStatus.NOT_FOUND);
     }
 }

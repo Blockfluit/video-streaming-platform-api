@@ -1,13 +1,17 @@
 package nl.nielsvanbruggen.videostreamingplatform.ticket;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.global.exception.ErrorInfo;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.GlobalExceptionHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -39,12 +43,7 @@ public class TicketController {
 
     @DeleteMapping
     public ResponseEntity<?> deleteTicket(@Valid @RequestBody TicketDeleteRequest ticketDeleteRequest, Authentication authentication) {
-        try {
-            ticketService.deleteTicket(ticketDeleteRequest, authentication);
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (TicketException ex) {
-            return new ResponseEntity<>(GlobalExceptionHandler.singleMessageToErrorMap(ex.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-
+        ticketService.deleteTicket(ticketDeleteRequest, authentication);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

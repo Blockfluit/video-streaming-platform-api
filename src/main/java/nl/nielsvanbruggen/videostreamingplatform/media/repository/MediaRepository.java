@@ -19,8 +19,7 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
 
     @Query("SELECT m " +
             "FROM Media m " +
-            "INNER JOIN MediaGenre g " +
-            "ON m = g.media " +
+            "INNER JOIN MediaGenre g ON m = g.media " +
             "WHERE m.type LIKE '%'|| :type || '%' " +
             "AND LOWER(m.name) LIKE '%'|| LOWER(:search) || '%' " +
             "AND g.genre IN :genres " +
@@ -30,10 +29,8 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
 
     @Query("SELECT m " +
             "FROM Media m " +
-            "INNER JOIN Video v " +
-            "ON m = v.media " +
-            "INNER JOIN Watched w " +
-            "ON v = w.video " +
+            "INNER JOIN Video v ON m = v.media " +
+            "INNER JOIN Watched w ON v = w.video " +
             "WHERE m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
             "ORDER BY MAX(w.updatedAt) DESC")
@@ -41,8 +38,7 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
 
     @Query("SELECT m " +
             "FROM Media m " +
-            "INNER JOIN Rating r " +
-            "ON m = r.media " +
+            "INNER JOIN Rating r ON m = r.media " +
             "WHERE m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
             "ORDER BY AVG(r.score) DESC, COUNT(r) DESC")
@@ -50,10 +46,8 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
 
     @Query("SELECT m " +
             "FROM Media m " +
-            "INNER JOIN Video v " +
-            "ON m = v.media " +
-            "INNER JOIN Watched w " +
-            "ON v = w.video " +
+            "INNER JOIN Video v ON m = v.media " +
+            "INNER JOIN Watched w ON v = w.video " +
             "WHERE m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
             "ORDER BY COUNT(DISTINCT w.user) DESC")
@@ -67,6 +61,16 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
             "AND m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
             "HAVING MAX(w.timestamp / v.duration) < 0.98 " +
+            "ORDER BY MAX(w.updatedAt) DESC")
+    Page<Media> findRecentWatched(User user, String type, Pageable pageable);
+
+    @Query("SELECT m " +
+            "FROM Media m " +
+            "INNER JOIN Video v ON m = v.media " +
+            "INNER JOIN Watched w ON v = w.video " +
+            "WHERE w.user = :user " +
+            "AND m.type LIKE '%'|| :type || '%' " +
+            "GROUP BY m.id " +
             "ORDER BY MAX(w.updatedAt) DESC")
     Page<Media> findAllRecentWatched(User user, String type, Pageable pageable);
 

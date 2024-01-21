@@ -1,7 +1,6 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.service;
 
 import com.sun.jdi.InternalException;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +8,10 @@ import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.*;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
-import nl.nielsvanbruggen.videostreamingplatform.watched.WatchedRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.repository.ActorRepository;
@@ -20,12 +22,11 @@ import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.controller.*;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOMapper;
-import nl.nielsvanbruggen.videostreamingplatform.global.service.VideoService;
+import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
 import nl.nielsvanbruggen.videostreamingplatform.global.service.ImageService;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.*;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
-import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -33,7 +34,6 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -119,10 +118,11 @@ public class MediaService {
                  .map(mediaDTOSimplifiedMapper);
     }
 
+
     public Page<MediaDTO> getRecentWatched(Authentication authentication, int pageNumber, int pageSize, String type) {
         User user = userService.getUser(authentication.getName());
 
-        return mediaRepository.findAllRecentWatched(user, type, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findRecentWatched(user, type, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 

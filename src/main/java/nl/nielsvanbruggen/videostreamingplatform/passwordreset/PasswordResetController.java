@@ -16,18 +16,14 @@ public class PasswordResetController {
     private final PasswordResetService passwordResetService;
 
     @PostMapping
-    public ResponseEntity<String> createToken(@Valid @RequestBody PasswordResetPostRequest passwordResetPostRequest) {
+    public ResponseEntity<Void> createToken(@Valid @RequestBody PasswordResetPostRequest passwordResetPostRequest) {
         passwordResetService.createToken(passwordResetPostRequest);
-        return ResponseEntity.ok().build();
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PatchMapping
-    public ResponseEntity<?> changePassword(@RequestParam(required = false) String token, @Valid @RequestBody PasswordResetPatchRequest passwordResetPatchRequest) {
-        try {
-            passwordResetService.changePassword(passwordResetPatchRequest, token);
-            return ResponseEntity.ok().build();
-        } catch (InvalidTokenException ex) {
-            return new ResponseEntity<>(GlobalExceptionHandler.singleMessageToErrorMap(ex.getMessage()), HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<Void> changePassword(@RequestParam(required = false) String token, @Valid @RequestBody PasswordResetPatchRequest passwordResetPatchRequest) {
+        passwordResetService.changePassword(passwordResetPatchRequest, token);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

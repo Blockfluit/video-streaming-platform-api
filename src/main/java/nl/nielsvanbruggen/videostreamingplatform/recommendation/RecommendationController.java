@@ -1,7 +1,6 @@
 package nl.nielsvanbruggen.videostreamingplatform.recommendation;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.media.controller.MediaListGetResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,11 +15,7 @@ public class RecommendationController {
     private final RecommendationService recommendationService;
 
     @GetMapping
-    public ResponseEntity<MediaListGetResponse> getRecommendations(Authentication authentication) {
-        MediaListGetResponse response = MediaListGetResponse.builder()
-                .content(recommendationService.getRecommendations(authentication))
-                .build();
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<Recommendation> getRecommendations(Authentication authentication) {
+        return new ResponseEntity<>(recommendationService.getRecommendations(authentication), HttpStatus.OK);
     }
 }

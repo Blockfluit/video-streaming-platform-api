@@ -56,7 +56,7 @@ public class ApplicationConfig {
         return new BCryptPasswordEncoder();
     }
 
-    //TODO: remove before production
+    //TODO: change before production
     @Bean
     @Primary
     CorsConfigurationSource corsConfigurationSource() {
