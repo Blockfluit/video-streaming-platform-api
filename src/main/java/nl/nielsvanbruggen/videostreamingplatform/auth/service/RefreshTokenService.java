@@ -46,7 +46,7 @@ public class RefreshTokenService {
         return refreshTokenRepository.save(token);
     }
 
-    public void revokeRefreshToken(User user) {
-        refreshTokenRepository.deleteAllByUser(user);
+    public void revokeRefreshToken(Long userId) {
+        refreshTokenRepository.deleteAllByUserId(userId);
     }
 }
