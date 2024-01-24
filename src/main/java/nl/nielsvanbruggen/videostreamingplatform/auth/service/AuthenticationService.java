@@ -1,14 +1,13 @@
 package nl.nielsvanbruggen.videostreamingplatform.auth.service;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.auth.controller.AuthenticationRequest;
-import nl.nielsvanbruggen.videostreamingplatform.auth.controller.RegisterRequest;
+import nl.nielsvanbruggen.videostreamingplatform.auth.repository.controller.AuthenticationRequest;
+import nl.nielsvanbruggen.videostreamingplatform.auth.repository.controller.RegisterRequest;
 import nl.nielsvanbruggen.videostreamingplatform.config.JwtService;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.AlreadyInUseException;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.invitetoken.InviteToken;
 import nl.nielsvanbruggen.videostreamingplatform.invitetoken.InviteTokenRepository;
-import nl.nielsvanbruggen.videostreamingplatform.auth.service.RefreshTokenService;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;

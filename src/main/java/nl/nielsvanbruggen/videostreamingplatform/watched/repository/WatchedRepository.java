@@ -37,4 +37,10 @@ public interface WatchedRepository extends JpaRepository<Watched, WatchedId> {
             "GROUP BY v.media " +
             "ORDER BY MAX(w.updatedAt) DESC")
     List<Media> findAllMediaByUser(@Param("user") User user);
+
+    @Query("SELECT COUNT(DISTINCT v.media) " +
+            "FROM Watched w " +
+            "INNER JOIN Video v ON w.video = v " +
+            "WHERE w.user = :user")
+    int countAllNotWatchedByUser(User user);
 }

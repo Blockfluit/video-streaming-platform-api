@@ -67,6 +67,7 @@ public class MediaService {
 
     @Scheduled(cron = "0 0/15 * 1/1 * *")
     @Caching(evict = {
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true),
             @CacheEvict(value = "allMedia", allEntries = true),
             @CacheEvict(value = "bestRatedMedia", allEntries = true),
             @CacheEvict(value = "mostWatchedMedia", allEntries = true),
@@ -90,31 +91,31 @@ public class MediaService {
                         .map(Genre::new)
                         .toList();
 
-        return mediaRepository.findAllByPartialName(search, type, queryGenres, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllByPartialNameTypeAndGenres(search, type, queryGenres, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
     @Cacheable(value = "recentUploadedMedia")
     public Page<MediaDTO> getRecentUploaded(int pageNumber, int pageSize, String type) {
-        return mediaRepository.findAllRecentUploaded(type, Instant.now().minus(7, ChronoUnit.DAYS), PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllRecentUploadedByType(type, Instant.now().minus(7, ChronoUnit.DAYS), PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
     @Cacheable(value = "bestRatedMedia")
     public Page<MediaDTO> getBestRated(int pageNumber, int pageSize, String type) {
-        return mediaRepository.findAllBestRated(type, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllBestRatedByType(type, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
     @Cacheable(value = "mostWatchedMedia")
     public Page<MediaDTO> getMostWatched(int pageNumber, int pageSize, String type) {
-        return mediaRepository.findAllMostWatched(type, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllMostWatchedByType(type, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
     @Cacheable(value = "lastWatchedMedia")
     public Page<MediaDTO> getLastWatched(int pageNumber, int pageSize, String type) {
-         return mediaRepository.findAllLastWatched(type, PageRequest.of(pageNumber, pageSize))
+         return mediaRepository.findAllLastWatchedByType(type, PageRequest.of(pageNumber, pageSize))
                  .map(mediaDTOSimplifiedMapper);
     }
 
@@ -122,7 +123,7 @@ public class MediaService {
     public Page<MediaDTO> getRecentWatched(Authentication authentication, int pageNumber, int pageSize, String type) {
         User user = userService.getUser(authentication.getName());
 
-        return mediaRepository.findRecentWatched(user, type, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findRecentWatchedByUserAndType(user, type, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
@@ -203,7 +204,10 @@ public class MediaService {
     }
 
     @Transactional
-    @CacheEvict(value = "allMedia", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+    })
     public void patchMedia(Long id, MediaPatchRequest request) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
@@ -267,7 +271,10 @@ public class MediaService {
     }
 
 
-    @CacheEvict(value = "allMedia", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+    })
     public void postMedia(MediaPostRequest request) {
         if(request.getThumbnail() == null) {
             throw new IllegalArgumentException("No thumbnail provided.");
@@ -320,7 +327,10 @@ public class MediaService {
     }
 
     @Transactional
-    @CacheEvict(value = "allMedia", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+    })
     public void deleteMedia(Long id) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));

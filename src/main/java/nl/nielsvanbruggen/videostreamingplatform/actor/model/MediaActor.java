@@ -16,9 +16,11 @@ import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 @IdClass(MediaActorId.class)
 public class MediaActor {
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "media_id")
     private Media media;
     @Id
     @ManyToOne
+    @JoinColumn(name = "actor_id")
     private Actor actor;
 }

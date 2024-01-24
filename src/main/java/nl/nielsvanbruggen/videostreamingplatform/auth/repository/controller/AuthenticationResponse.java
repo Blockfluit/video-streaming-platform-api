@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.auth.controller;
+package nl.nielsvanbruggen.videostreamingplatform.auth.repository.controller;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

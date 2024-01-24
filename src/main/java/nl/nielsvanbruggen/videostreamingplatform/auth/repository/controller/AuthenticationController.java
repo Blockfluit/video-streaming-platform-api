@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.auth.controller;
+package nl.nielsvanbruggen.videostreamingplatform.auth.repository.controller;
 
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -39,10 +39,13 @@ public class AuthenticationController {
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
         User user = authenticationService.authenticate(request);
+        RefreshToken refreshToken = refreshTokenService.getRefreshTokens(user).stream()
+                .findFirst()
+                .orElseGet(() -> refreshTokenService.createRefreshToken(user));
 
         AuthenticationResponse response = AuthenticationResponse.builder()
                 .accessToken(jwtService.generateToken(user))
-                .refreshToken(refreshTokenService.createRefreshToken(user).getToken())
+                .refreshToken(refreshToken.getToken())
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
