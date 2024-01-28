@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.ErrorInfo;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.GlobalExceptionHandler;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
+import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,12 +22,15 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/invite-tokens")
 public class InviteTokenController {
     private final InviteTokenService inviteTokenService;
-
+    private final InviteTokenDTOMapper inviteTokenDTOMapper;
+    private final UserService userService;
 
     @GetMapping
     public ResponseEntity<AllInviteTokensGetResponse> getAllInviteTokens() {
         AllInviteTokensGetResponse response = AllInviteTokensGetResponse.builder()
-                .allInviteTokens(inviteTokenService.getAllInviteTokens())
+                .allInviteTokens(inviteTokenService.getAllInviteTokens().stream()
+                        .map(inviteTokenDTOMapper)
+                        .toList())
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -33,14 +38,15 @@ public class InviteTokenController {
 
     @PostMapping
     public ResponseEntity<Void> createInviteToken(@RequestBody InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
-        inviteTokenService.createInviteToken(inviteTokenPostRequest, authentication);
+        User user = userService.getUser(authentication.getName());
+        inviteTokenService.createInviteToken(user, inviteTokenPostRequest);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping("/{token}")
     public ResponseEntity<Void> deleteInviteToken(@PathVariable String token) {
-            inviteTokenService.deleteInviteToken(token);
-            return new ResponseEntity<>(HttpStatus.OK);
+        inviteTokenService.deleteInviteToken(token);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @ExceptionHandler(InternalException.class)

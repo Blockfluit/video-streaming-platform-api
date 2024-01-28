@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.time.Instant;
 import java.util.List;
@@ -39,9 +41,9 @@ public class Media {
     private List<MediaGenre> genres;
     @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
     private List<MediaActor> actors;
-    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
     private List<Review> reviews;
-    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
     private List<Rating> ratings;
 
     @Override

@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
+import nl.nielsvanbruggen.videostreamingplatform.config.EnvironmentProperties;
+import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.video.exception.VideoException;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
@@ -34,22 +36,20 @@ public class VideoService {
     private final static ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final VideoRepository videoRepository;
     private final SubtitleRepository subtitleRepository;
-    @Value("${env.videos.root}")
-    private String videosRoot;
-    @Value("${env.snapshot.root}")
-    private String snapshotPath;
-    @Value("${env.ffprobe.path}")
-    private String ffprobePath;
-    @Value("${env.ffmpeg.path}")
-    private String ffmpegPath;
+    private final EnvironmentProperties env;
 
     public Video getVideo(long videoId) {
         return videoRepository.findById(videoId)
                 .orElseThrow(() -> new VideoException(String.format("Video with id: %d does not exist", videoId)));
     }
 
+    public Subtitle getSubtitle(long subtitleId) {
+        return subtitleRepository.findById(subtitleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Subtitle with given id does not exist."));
+    }
+
     public void updateVideos(Media media) throws IOException {
-        Path dir = Files.walk(Paths.get(videosRoot), 2, FileVisitOption.FOLLOW_LINKS)
+        Path dir = Files.walk(Paths.get(env.getVideos().get("root")), 2, FileVisitOption.FOLLOW_LINKS)
                 .filter(file -> file.getFileName().toString().equals(media.getName()))
                 .findFirst()
                 .orElseThrow(() -> new IOException("No folder on system associated with this name"));
@@ -58,10 +58,10 @@ public class VideoService {
 
         //Finds all videos and subtitles on disk
         Files.walk(dir, 2).forEach(file -> {
-            if(FilenameUtils.getExtension(file.getFileName().toString()).equals("mp4")) {
+            if (FilenameUtils.getExtension(file.getFileName().toString()).equals("mp4")) {
                 videos.add(file);
             }
-            if(FilenameUtils.getExtension(file.getFileName().toString()).equals("vtt")) {
+            if (FilenameUtils.getExtension(file.getFileName().toString()).equals("vtt")) {
                 subtitles.add(file);
             }
         });
@@ -73,78 +73,80 @@ public class VideoService {
         List<Video> dbVideos = videoRepository.findAllByMedia(media);
         // Deletes all videos from db that don't exist in the folder.
         dbVideos.forEach(video -> {
-                    if (!parsedVideos.contains(video.getPath())) {
-                        subtitleRepository.deleteAllByVideo(video);
-                        videoRepository.delete(video);
-                    }
-                });
+            if (!parsedVideos.contains(video.getPath())) {
+                subtitleRepository.deleteAllByVideo(video);
+                videoRepository.delete(video);
+            }
+        });
 
-            FFprobe ffprobe = new FFprobe(ffprobePath);
-            FFmpeg ffmpeg = new FFmpeg(ffmpegPath);
-            int newEntries = 0;
-            for (int i = 0; i < videos.size(); i++) {
-                Path videoPath = videos.get(i);
+        int newEntries = 0;
+        for (Path videoPath : videos) {
+            int seasonIndex = videoPath.getParent().toString().lastIndexOf("Season");
+            int season = seasonIndex == -1 ? -1 : Integer.parseInt(videoPath.getParent().toString().substring(seasonIndex + 6).trim());
 
-                int seasonIndex = videoPath.getParent().toString().lastIndexOf("Season");
-                int season = seasonIndex == -1 ? -1 : Integer.parseInt(videoPath.getParent().toString().substring(seasonIndex + 6).trim());
+            Video video = videoRepository.findByPath(parsePath(videoPath))
+                    .orElseGet(Video::new);
 
-                Video video = videoRepository.findByPath(parsePath(videoPath))
-                        .orElseGet(Video::new);
+            if (video.getId() == 0) {
+                video.setIndex(dbVideos.size() + newEntries);
+                newEntries++;
+            }
 
-                if(video.getId() == 0) {
-                    video.setIndex(dbVideos.size() + newEntries);
-                    newEntries++;
-                }
+            video.setName(videoPath.getFileName().toString().replace(".mp4", ""));
+            video.setPath(parsePath(videoPath));
+            video.setMedia(media);
+            video.setSeason(season);
+            videoRepository.save(video);
 
-                video.setName(videoPath.getFileName().toString().replace(".mp4", ""));
-                video.setPath(parsePath(videoPath));
-                video.setMedia(media);
-                video.setSeason(season);
-                videoRepository.save(video);
-
-                executorService.execute(() -> {
-                    try {
-                        // TODO: Would be cleaner if in own function.
-                        float duration = (float) ffprobe.probe(videoPath.toString()).getFormat().duration;
-                        video.setDuration(duration);
-
-                        int screenshotAtTime = (int) duration / 10;
-                        ffmpeg.run(new FFmpegBuilder()
-                                .setStartOffset(screenshotAtTime, TimeUnit.SECONDS)
-                                .setInput(videoPath.toString())
-                                .addOutput(snapshotPath + "/" + video.getName() + ".jpg")
-                                .setFrames(1)
-                                .setVideoFilter("scale=1000:-1")
-                                .setVideoCodec("mjpeg")
-                                .setVideoQuality(5)
-                                .done()
-                        );
-                        video.setSnapshot(video.getName() + ".jpg");
-
-                        videoRepository.save(video);
-                    } catch (IOException ex) {
-                        throw new InternalException(ex.getMessage());
-                    }
-                });
-
-                List<Subtitle> subs = subtitles.stream()
-                        .filter(subtitle -> subtitle.toString().split("_")[0]
-                                .equals(videoPath.toString().replace(".mp4", "")))
-                        .map(subtitle -> Subtitle.builder()
-                                .defaultSub(subtitle.getFileName().toString().split("_")[1].equals("en"))
-                                .srcLang(subtitle.getFileName().toString().split("_")[1])
-                                .label(subtitle.getFileName().toString().split("_")[2].replace(".vtt", ""))
-                                .path(parsePath(subtitle))
-                                .video(video)
-                                .build())
-                        .collect(Collectors.toList());
-                subtitleRepository.saveAll(subs);
+            executorService.execute(() -> createSnapshot(video, videoPath));
+            persistSubtitles(video, videoPath, subtitles);
         }
+    }
+
+    private void createSnapshot(Video video, Path videoPath) {
+        try {
+            FFprobe ffprobe = new FFprobe(env.getFfprobe().get("path"));
+            FFmpeg ffmpeg = new FFmpeg(env.getFfmpeg().get("path"));
+            float duration = (float) ffprobe.probe(videoPath.toString()).getFormat().duration;
+            video.setDuration(duration);
+
+            final int screenshotAtTime = (int) duration / 10;
+            ffmpeg.run(new FFmpegBuilder()
+                    .setStartOffset(screenshotAtTime, TimeUnit.SECONDS)
+                    .setInput(videoPath.toString())
+                    .addOutput(env.getSnapshot().get("root") + video.getName() + ".jpg")
+                    .setFrames(1)
+                    .setVideoFilter("scale=1000:-1")
+                    .setVideoCodec("mjpeg")
+                    .setVideoQuality(5)
+                    .done()
+            );
+            video.setSnapshot(video.getName() + ".jpg");
+
+            videoRepository.save(video);
+        } catch (IOException ex) {
+            throw new InternalException(ex.getMessage());
+        }
+    }
+
+    private void persistSubtitles(Video video, Path videoPath, List<Path> subtitles) {
+        List<Subtitle> subs = subtitles.stream()
+                .filter(subtitle -> subtitle.toString().split("_")[0]
+                        .equals(videoPath.toString().replace(".mp4", "")))
+                .map(subtitle -> Subtitle.builder()
+                        .defaultSub(subtitle.getFileName().toString().split("_")[1].equals("en"))
+                        .srcLang(subtitle.getFileName().toString().split("_")[1])
+                        .label(subtitle.getFileName().toString().split("_")[2].replace(".vtt", ""))
+                        .path(parsePath(subtitle))
+                        .video(video)
+                        .build())
+                .toList();
+        subtitleRepository.saveAll(subs);
     }
 
     private String parsePath(Path path) {
         return path.toString()
                 .replace("\\", "/")
-                .replace(videosRoot.replace("\\", "/"), "");
+                .replace(env.getVideos().get("root").replace("\\", "/"), "");
     }
 }

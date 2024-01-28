@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.config;
+package nl.nielsvanbruggen.videostreamingplatform.auth.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.auth.service.RefreshTokenService;
+import nl.nielsvanbruggen.videostreamingplatform.config.EnvironmentProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,10 +24,8 @@ import java.util.function.Function;
 @Service
 @RequiredArgsConstructor
 public class JwtService {
-    @Value("${env.secret-key}")
-    private String SECRET_KEY;
-    private static final int EXPIRATION_TIME_MILLIS = 1000 * 60 * 60 * 24 * 7;
-    private final RefreshTokenService refreshTokenService;
+    private static final int EXPIRATION_TIME_MILLIS = 1000 * 60 * 5;
+    private final EnvironmentProperties env;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -45,7 +44,7 @@ public class JwtService {
                         .orElse("")))
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(Date.from(Instant.now()))
-                .setExpiration(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
+                .setExpiration(Date.from(Instant.now().plus(EXPIRATION_TIME_MILLIS, ChronoUnit.MILLIS)))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -77,7 +76,7 @@ public class JwtService {
     }
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(env.getSecretKey());
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

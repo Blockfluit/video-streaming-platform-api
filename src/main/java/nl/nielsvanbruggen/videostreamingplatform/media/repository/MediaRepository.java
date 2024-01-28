@@ -18,12 +18,28 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
     @Query("SELECT m " +
             "FROM Media m " +
             "INNER JOIN MediaGenre g ON m = g.media " +
+            "INNER JOIN MediaActor ma ON m = ma.media " +
+            "INNER JOIN Actor a ON ma.actor = a " +
             "WHERE m.type LIKE '%'|| :type || '%' " +
-            "AND LOWER(m.name) LIKE '%'|| LOWER(:search) || '%' " +
             "AND g.genre IN :genres " +
+            "AND (" +
+            "   LOWER(m.name) LIKE '%'|| LOWER(:search) || '%' " +
+            "   OR LOWER(g.genre.name) LIKE '%'|| LOWER(:search) || '%' " +
+            "   OR LOWER(CONCAT(a.firstname, ' ', a.lastname)) LIKE '%'|| LOWER(:search) || '%' " +
+            ") " +
             "GROUP BY m " +
             "ORDER BY m.updatedAt DESC")
     Page<Media> findAllByPartialNameTypeAndGenres(String search, String type, List<Genre> genres, Pageable pageable);
+
+    @Query("SELECT m.id, m.name " +
+            "FROM Media m " +
+            "INNER JOIN MediaGenre g ON m = g.media " +
+            "WHERE m.type LIKE '%'|| :type || '%' " +
+            "AND g.genre IN :genres " +
+            "AND LOWER(m.name) LIKE LOWER(:search) || '%' " +
+            "GROUP BY m " +
+            "ORDER BY m.name ASC")
+    Page<Media> findAutoCompletion(String search, String type, List<Genre> genres, Pageable pageable);
 
     @Query("SELECT m " +
             "FROM Media m " +

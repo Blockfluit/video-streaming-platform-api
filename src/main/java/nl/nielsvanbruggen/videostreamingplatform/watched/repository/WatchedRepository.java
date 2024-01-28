@@ -15,13 +15,16 @@ import java.util.Optional;
 
 public interface WatchedRepository extends JpaRepository<Watched, WatchedId> {
     List<Watched> findAllByUser(User user);
+
     Optional<Watched> findByUserAndVideo(User user, Video video);
+
     @Query("SELECT COUNT(DISTINCT user.id) " +
             "FROM Watched w " +
             "INNER JOIN Video v ON w.video.id = v.id " +
             "INNER JOIN Media m ON v.media.id = m.id " +
             "WHERE m = :media")
     int totalUniqueViewsByMedia(@Param("media") Media media);
+
     @Query("SELECT w " +
             "FROM Watched w " +
             "WHERE w.user = :user " +

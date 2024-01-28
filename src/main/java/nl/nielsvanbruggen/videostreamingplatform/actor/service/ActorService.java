@@ -17,15 +17,15 @@ public class ActorService {
         return actorRepository.findAll();
     }
 
-    public void postActor(ActorPostRequest actorPostRequest) {
-        actorRepository.findByFirstnameAndLastname(actorPostRequest.getFirstname(), actorPostRequest.getLastname())
+    public void postActor(String firstname, String lastname) {
+        actorRepository.findByFirstnameAndLastname(firstname, lastname)
                 .ifPresent((actor) -> {
                     throw new IllegalArgumentException("actor already exists");
                 });
 
         Actor actor = Actor.builder()
-                .firstname(actorPostRequest.getFirstname())
-                .lastname(actorPostRequest.getLastname())
+                .firstname(firstname)
+                .lastname(lastname)
                 .build();
         actorRepository.save(actor);
     }

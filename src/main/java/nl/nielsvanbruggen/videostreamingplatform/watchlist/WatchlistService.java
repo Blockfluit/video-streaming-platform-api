@@ -3,6 +3,7 @@ package nl.nielsvanbruggen.videostreamingplatform.watchlist;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOMapper;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
@@ -17,27 +18,18 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class WatchlistService {
-    private final UserRepository userRepository;
     private final WatchlistRepository watchlistRepository;
-    private final MediaRepository mediaRepository;
-    private final MediaDTOMapper mediaDTOMapper;
+    private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
 
 
-    public List<MediaDTO> getWatchlist(Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist."));
-
+    public List<MediaDTO> getWatchlist(User user) {
         return watchlistRepository.findAllByUser(user).stream()
                 .map(Watchlist::getMedia)
-                .map(mediaDTOMapper)
+                .map(mediaDTOSimplifiedMapper)
                 .collect(Collectors.toList());
     }
 
-    public void postWatchlist(WatchlistRequest request, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist."));
-        Media media = mediaRepository.findById(request.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Media does not exist."));
+    public void postWatchlist(User user, Media media) {
         Watchlist watchlist = Watchlist.builder()
                 .user(user)
                 .media(media)
@@ -47,11 +39,7 @@ public class WatchlistService {
         watchlistRepository.save(watchlist);
     }
 
-    public void deleteWatchlist(WatchlistRequest request, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("User does not exist."));
-        Media media = mediaRepository.findById(request.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Media does not exist."));
+    public void deleteWatchlist(User user, Media media) {
         Watchlist watchlist = watchlistRepository.findById(new WatchlistId(media, user))
                 .orElseThrow(() -> new IllegalArgumentException("Watchlist entry does not exist."));
 

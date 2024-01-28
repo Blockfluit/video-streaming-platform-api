@@ -4,7 +4,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.auth.service.AuthenticationService;
-import nl.nielsvanbruggen.videostreamingplatform.config.JwtService;
+import nl.nielsvanbruggen.videostreamingplatform.auth.service.JwtService;
 import nl.nielsvanbruggen.videostreamingplatform.auth.model.RefreshToken;
 import nl.nielsvanbruggen.videostreamingplatform.auth.exception.RefreshTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.auth.service.RefreshTokenService;
@@ -38,7 +38,7 @@ public class AuthenticationController {
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
-        User user = authenticationService.authenticate(request);
+        User user = authenticationService.authenticate(request.getUsername(), request.getPassword());
         RefreshToken refreshToken = refreshTokenService.getRefreshTokens(user).stream()
                 .findFirst()
                 .orElseGet(() -> refreshTokenService.createRefreshToken(user));

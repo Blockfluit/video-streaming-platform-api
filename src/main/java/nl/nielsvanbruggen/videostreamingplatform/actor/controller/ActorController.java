@@ -28,7 +28,7 @@ public class ActorController {
 
     @PostMapping
     public ResponseEntity<String> postActor(@RequestBody @Valid ActorPostRequest actorPostRequest) {
-        actorService.postActor(actorPostRequest);
+        actorService.postActor(actorPostRequest.getFirstname(), actorPostRequest.getLastname());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

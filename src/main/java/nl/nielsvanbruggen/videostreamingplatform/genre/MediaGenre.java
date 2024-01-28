@@ -15,7 +15,7 @@ import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 @IdClass(MediaGenreId.class)
 public class MediaGenre {
     @Id
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "media_id")
     private Media media;
     @Id

@@ -24,7 +24,7 @@ public class GenreController {
 
     @PostMapping
     public ResponseEntity<String> postGenre(@Valid @RequestBody GenreRequest genreRequest) {
-        genreService.postGenre(genreRequest);
+        genreService.postGenre(genreRequest.getGenre());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

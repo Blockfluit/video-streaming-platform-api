@@ -18,16 +18,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InviteTokenService {
     private final InviteTokenRepository inviteTokenRepository;
-    private final UserRepository userRepository;
-    private final InviteTokenDTOMapper inviteTokenDTOMapper;
 
-    public List<InviteTokenDTO> getAllInviteTokens() {
-        return inviteTokenRepository.findAll().stream()
-                .map(inviteTokenDTOMapper)
-                .collect(Collectors.toList());
+    public List<InviteToken> getAllInviteTokens() {
+        return inviteTokenRepository.findAll();
     }
 
-    public void createInviteToken(InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
+    public void createInviteToken(User user, InviteTokenPostRequest inviteTokenPostRequest) {
         if(inviteTokenPostRequest.getExpiration() == null ||
                 inviteTokenPostRequest.getExpiration().isBefore(Instant.now())) {
             throw new IllegalArgumentException();
@@ -36,9 +32,6 @@ public class InviteTokenService {
         Role role = (inviteTokenPostRequest.getRole() == null ||
                 !Arrays.asList(Role.values()).contains(inviteTokenPostRequest.getRole())) ?
                 Role.USER: inviteTokenPostRequest.getRole();
-
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow();
 
         InviteToken token = InviteToken.builder()
                 .token(TokenGeneratorUtil.generate(254))

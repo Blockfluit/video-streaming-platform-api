@@ -2,9 +2,12 @@ package nl.nielsvanbruggen.videostreamingplatform.stream;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.nielsvanbruggen.videostreamingplatform.config.EnvironmentProperties;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.global.util.MimeTypeUtil;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
@@ -24,80 +27,62 @@ import java.nio.file.Path;
 @Service
 @RequiredArgsConstructor
 public class StreamService {
-    private final VideoRepository videoRepository;
-    private final MediaRepository mediaRepository;
-    private final SubtitleRepository subtitleRepository;
     private final static int MAX_CHUNK_SIZE_BYTES = 1024 * 1024;
-    @Value("${env.thumbnail.root}")
-    private String thumbnailRoot;
-    @Value("${env.snapshot.root}")
-    private String snapshotRoot;
-    @Value("${env.videos.root}")
-    private String videosRoot;
+    private final EnvironmentProperties env;
 
     public ResponseEntity<?> getVideo(Video video, HttpHeaders headers) {
-        String path = video.getPath();
-        String absolutePath = videosRoot + "/" + path;
+        Path absolutePath = Path.of(env.getVideos().get("root") + video.getPath());
 
-        return createStreamResponseEntity(Path.of(absolutePath), headers);
+        long tot = totalBytes(absolutePath);
+        return createStreamResponseEntity(absolutePath, headers, tot);
     }
 
-    public ResponseEntity<byte[]> getSubtitle(long videoId) {
-        String path = subtitleRepository.findById(videoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Subtitle with given id does not exist."))
-                .getPath();
-        String absolutePath = videosRoot + "/" + path;
+    public ResponseEntity<byte[]> getSubtitle(Subtitle subtitle) {
+        Path absolutePath = Path.of(env.getVideos().get("root") + subtitle.getPath());
 
-        return createFullResponseEntity(Path.of(absolutePath));
+        long tot = totalBytes(absolutePath);
+        byte[] bytes = readBytes(absolutePath, 0, tot);
+        return createFullResponseEntity(absolutePath, bytes, tot);
     }
 
-    public ResponseEntity<byte[]> getThumbnail(long mediaId) {
-        String path = mediaRepository.findById(mediaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Thumbnail with given id does not exist."))
-                .getThumbnail();
-        String absolutePath = thumbnailRoot + "/" + path;
+    public ResponseEntity<byte[]> getThumbnail(Media media) {
+        String path = media.getThumbnail();
+        Path absolutePath = Path.of(env.getThumbnail().get("root") + path);
 
-        return createFullResponseEntity(Path.of(absolutePath));
+        long tot = totalBytes(absolutePath);
+        byte[] bytes = readBytes(absolutePath, 0, tot);
+        return createFullResponseEntity(absolutePath, bytes, tot);
     }
 
-    public ResponseEntity<byte[]> getSnapshot(long videoId) {
-        String path = videoRepository.findById(videoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Snapshot with given id does not exist."))
-                .getSnapshot();
-        String absolutePath = snapshotRoot + "/" + path;
+    public ResponseEntity<byte[]> getSnapshot(Video video) {
+        Path absolutePath = Path.of(env.getSnapshot().get("root") + video.getSnapshot());
 
-        return createFullResponseEntity(Path.of(absolutePath));
+        long tot = totalBytes(absolutePath);
+        byte[] bytes = readBytes(absolutePath, 0, tot);
+        return createFullResponseEntity(absolutePath, bytes, tot);
     }
 
-    private ResponseEntity<?> createStreamResponseEntity(Path path, HttpHeaders headers) {
-        long tot = totalBytes(path);
-
+    private ResponseEntity<?> createStreamResponseEntity(Path path, HttpHeaders headers, long tot) {
+        // Handles case were no range header is provided.
         if (headers.getRange().size() == 0) {
             return createInitialResponse(path, tot);
         }
 
-        String rangeHeader = headers.getRange().get(0).toString();
-        long start = Long.parseLong(rangeHeader.split("-")[0]);
+        String[] rangeHeader = headers.getRange().get(0).toString().split("-");
+        long start = Long.parseLong(rangeHeader[0]);
+        long end = rangeHeader.length == 1 ?
+                // Handles case were only first number of range header is provided.
+                // This is the standard for most browsers.
+                Math.min((start + MAX_CHUNK_SIZE_BYTES), tot - 1) :
+                // Handles case were both numbers of range header is provided.
+                // As far as I know, only Apple does this.
+                Long.parseLong(rangeHeader[1]);
 
-        if (rangeHeader.split("-").length == 1) {
-            // MAX_CHUNK_SIZE_BYTES - 1, because its zero-based.
-            long end = Math.min((start + MAX_CHUNK_SIZE_BYTES - 1), tot - 1);
-            return createPartialResponse(path, start, end, tot);
-        }
-
-        long rangeEnd = Long.parseLong(rangeHeader.split("-")[1]);
-        if (rangeEnd < MAX_CHUNK_SIZE_BYTES - 1) {
-            return createPartialResponse(path, start, rangeEnd, tot);
-        }
-
-        long end = Math.min((start + MAX_CHUNK_SIZE_BYTES - 1), tot - 1);
-        return createPartialResponse(path, start, end, tot);
+        byte[] bytes = readBytes(path, start, end);
+        return createPartialResponse(path, bytes, start, end, tot);
     }
 
-    private ResponseEntity<byte[]> createFullResponseEntity(Path path) {
-        long tot = totalBytes(path);
-        byte[] bytes = readBytes(path, 0, tot);
-
+    private ResponseEntity<byte[]> createFullResponseEntity(Path path, byte[] bytes, long tot) {
         MultiValueMap<String, String> responseHeaders = new HttpHeaders();
         responseHeaders.add("Accept-Ranges", "bytes");
         responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
@@ -117,23 +102,22 @@ public class StreamService {
         return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
     }
 
-    private ResponseEntity<byte[]> createPartialResponse(Path path, long start, long end, long tot) {
-        byte[] bytes = readBytes(path, start, end);
-
+    private ResponseEntity<byte[]> createPartialResponse(Path path, byte[] bytes, long start, long end, long tot) {
         MultiValueMap<String, String> responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Range", String.format("bytes %1$d-%2$d/%3$d", start, end, tot));
         responseHeaders.add("Accept-Ranges", "bytes");
         responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
-        responseHeaders.add("Content-Length", Long.toString(bytes.length));
+        responseHeaders.add("Content-Length", String.valueOf(bytes.length));
         responseHeaders.add("Cache-Control", "no-store, no-cache");
 
         return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.PARTIAL_CONTENT);
     }
 
     private byte[] readBytes(Path path, long start, long end) {
-        try(InputStream is = Files.newInputStream(path)) {
+       try(InputStream is = Files.newInputStream(path)) {
             is.skip(start);
-            // Plus 1 because it's zero-based.
+            // + 1 because start and end are inclusive.
+            // For example bytes 0-1/100 should return byte[0] and byte[1]
             return is.readNBytes((int) (end - start + 1));
         } catch (IOException e) {
             log.warn(String.format("Could not read %d to %d bytes: %s", start, end, e.getMessage()));
@@ -145,7 +129,7 @@ public class StreamService {
             return Files.size(path);
         } catch (IOException e) {
             log.warn("Could not read total amount of bytes: " + e.getMessage());
-            return 0;
+            return -1;
         }
     }
 }

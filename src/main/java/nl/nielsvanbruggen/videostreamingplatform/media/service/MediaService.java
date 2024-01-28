@@ -4,6 +4,7 @@ import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.*;
@@ -50,25 +51,24 @@ import java.util.List;
 @Slf4j
 public class MediaService {
     private final VideoRepository videoRepository;
-    private final RatingRepository ratingRepository;
-    private final UserService userService;
     private final MediaRepository mediaRepository;
     private final GenreRepository genreRepository;
     private final ActorRepository actorRepository;
+    private final RatingRepository ratingRepository;
     private final ReviewRepository reviewRepository;
     private final WatchedRepository watchedRepository;
     private final SubtitleRepository subtitleRepository;
     private final MediaGenreRepository mediaGenreRepository;
     private final MediaActorRepository mediaActorRepository;
-    private final MediaDTOMapper mediaDTOMapper;
     private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
+    private final UserService userService;
     private final VideoService videoService;
     private final ImageService imageService;
 
     @Scheduled(cron = "0 0/15 * 1/1 * *")
     @Caching(evict = {
-            @CacheEvict(value = "recentUploadedMedia", allEntries = true),
             @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true),
             @CacheEvict(value = "bestRatedMedia", allEntries = true),
             @CacheEvict(value = "mostWatchedMedia", allEntries = true),
             @CacheEvict(value = "lastWatchedMedia", allEntries = true)
@@ -77,22 +77,32 @@ public class MediaService {
         log.debug("Cleared all media cache.");
     }
 
-    public MediaDTO getMedia(int id) {
-        return mediaRepository.findById((long) id)
-                .map(mediaDTOMapper)
+    public Media getMedia(long id) {
+        return mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
     }
 
-    @Cacheable(value = "allMedia", condition = "#search == ''")
+    @Cacheable(value = "allMedia")
     public Page<MediaDTO> getAllMedia(int pageNumber, int pageSize, String type, List<String> genres, String search) {
-        List<Genre> queryGenres = genres.isEmpty() ?
+        List<Genre> tmpGenres = genres.isEmpty() ?
                 genreRepository.findAll() :
                 genres.stream()
                         .map(Genre::new)
                         .toList();
 
-        return mediaRepository.findAllByPartialNameTypeAndGenres(search, type, queryGenres, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllByPartialNameTypeAndGenres(search, type, tmpGenres, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
+    }
+
+    public Page<Media> getAutocompletion(int pageNumber, int pageSize, String type, List<String> genres, String search) {
+        if(search.isEmpty()) return Page.empty(PageRequest.of(pageNumber, pageSize));
+
+        List<Genre> tmpGenres = genres.isEmpty() ?
+                genreRepository.findAll() :
+                genres.stream()
+                        .map(Genre::new)
+                        .toList();
+        return mediaRepository.findAutoCompletion(search, type, tmpGenres, PageRequest.of(pageNumber, pageSize));
     }
 
     @Cacheable(value = "recentUploadedMedia")

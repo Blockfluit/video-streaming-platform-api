@@ -2,6 +2,7 @@ package nl.nielsvanbruggen.videostreamingplatform.mediarequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MediaRequestController {
     private final MediaRequestService mediaRequestService;
+    private final UserService userService;
 
     @GetMapping
     public ResponseEntity<Page<MediaRequestDTO>> getMediaRequest(@RequestParam int pagenumber,
