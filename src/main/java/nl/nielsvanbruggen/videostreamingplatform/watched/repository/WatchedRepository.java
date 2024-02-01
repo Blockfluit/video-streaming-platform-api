@@ -47,9 +47,10 @@ public interface WatchedRepository extends JpaRepository<Watched, WatchedId> {
             "   GROUP BY m1.id" +
             "   ORDER BY MAX(w1.updatedAt) DESC" +
             ") AS sub ON w2.updatedAt = sub.updatedAt " +
-            "WHERE (w2.timestamp / v2.duration) < 0.95 " +
+            "WHERE m2.type LIKE '%'|| :type || '%' " +
+            "AND (w2.timestamp / v2.duration) < 0.95 " +
             "ORDER BY w2.updatedAt DESC")
-    Page<Media> findAllWatchedByUserAndGroupedByMediaId(@Param("user") User user, Pageable pageable);
+    Page<Media> findAllWatchedByUserAndGroupedByMediaId(@Param("user") User user, String type, Pageable pageable);
 
     @Query("SELECT v.media, MAX(w.updatedAt) " +
             "FROM Watched w " +
