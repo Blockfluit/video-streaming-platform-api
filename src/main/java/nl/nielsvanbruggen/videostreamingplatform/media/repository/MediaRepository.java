@@ -74,7 +74,6 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
             "WHERE w.user = :user " +
             "AND m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
-            "HAVING MAX(w.timestamp / v.duration) < 0.98 " +
             "ORDER BY MAX(w.updatedAt) DESC")
     Page<Media> findRecentWatchedByUserAndType(User user, String type, Pageable pageable);
 
@@ -98,7 +97,8 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
     @Query("SELECT m " +
             "FROM Media m " +
             "INNER JOIN Video v ON m = v.media " +
-            "LEFT JOIN Watched w ON v = w.video AND w.user = :user " +
+            "LEFT JOIN Watched w ON v = w.video " +
+            "AND w.user = :user " +
             "WHERE w IS NULL " +
             "GROUP BY m")
     List<Media> findAllNotWatchedByUser(User user);

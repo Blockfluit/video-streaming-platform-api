@@ -147,6 +147,6 @@ public class VideoService {
     private String parsePath(Path path) {
         return path.toString()
                 .replace("\\", "/")
-                .replace(env.getVideos().get("root").replace("\\", "/"), "");
+                .replace(env.getVideos().get("root"), "/");
     }
 }

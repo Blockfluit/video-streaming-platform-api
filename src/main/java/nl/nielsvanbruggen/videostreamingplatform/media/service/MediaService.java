@@ -12,6 +12,7 @@ import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.watched.model.Watched;
 import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
@@ -130,10 +131,9 @@ public class MediaService {
     }
 
 
-    public Page<MediaDTO> getRecentWatched(Authentication authentication, int pageNumber, int pageSize, String type) {
-        User user = userService.getUser(authentication.getName());
-
-        return mediaRepository.findRecentWatchedByUserAndType(user, type, PageRequest.of(pageNumber, pageSize))
+    public Page<MediaDTO> getRecentWatched(User user, int pageNumber, int pageSize, String type) {
+//        Page<Watched> page = mediaRepository.findRecentWatchedByUserAndType(user, type, PageRequest.of(pageNumber, pageSize));
+        return watchedRepository.findAllWatchedByUserAndGroupedByMediaId(user, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 

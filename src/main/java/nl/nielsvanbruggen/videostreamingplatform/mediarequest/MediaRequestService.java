@@ -2,6 +2,7 @@ package nl.nielsvanbruggen.videostreamingplatform.mediarequest;
 
 import com.sun.jdi.InternalException;
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
@@ -42,12 +43,9 @@ public class MediaRequestService {
         mediaRequestRepository.save(mediaRequest);
     }
 
-    public void patchMediaRequest(Long id, MediaRequestPatchRequest request, Authentication authentication) {
+    public void patchMediaRequest(long id, User user, MediaRequestPatchRequest request) {
         MediaRequest mediaRequest = mediaRequestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No request found with this id."));
-
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new InternalException("No user associated with this name."));
+                .orElseThrow(() -> new InternalException("Request does not exist."));
 
         if(!mediaRequest.getCreatedBy().equals(user) &&
                 !user.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.name()))
@@ -70,7 +68,6 @@ public class MediaRequestService {
         if(request.getComment() != null) mediaRequest.setComment(request.getComment());
 
         mediaRequest.setUpdatedAt(Instant.now());
-
         mediaRequestRepository.save(mediaRequest);
     }
 

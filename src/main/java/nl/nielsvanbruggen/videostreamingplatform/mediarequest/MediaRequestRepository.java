@@ -10,7 +10,7 @@ public interface MediaRequestRepository extends JpaRepository<MediaRequest, Long
     @Query("SELECT m " +
     "FROM MediaRequest m " +
     "WHERE LOWER(m.name) LIKE '%'|| LOWER(:search) || '%' " +
-    "ORDER BY m.updatedAt DESC")
+    "ORDER BY m.createdAt DESC")
     Page<MediaRequest> findAll(String search, Pageable pageable);
 
 }
