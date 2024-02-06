@@ -2,13 +2,11 @@ package nl.nielsvanbruggen.videostreamingplatform.media.repository;
 
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
@@ -20,12 +18,28 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
     @Query("SELECT m " +
             "FROM Media m " +
             "INNER JOIN MediaGenre g ON m = g.media " +
+            "INNER JOIN MediaActor ma ON m = ma.media " +
+            "INNER JOIN Actor a ON ma.actor = a " +
             "WHERE m.type LIKE '%'|| :type || '%' " +
-            "AND LOWER(m.name) LIKE '%'|| LOWER(:search) || '%' " +
             "AND g.genre IN :genres " +
+            "AND (" +
+            "   LOWER(m.name) LIKE '%'|| LOWER(:search) || '%' " +
+            "   OR LOWER(g.genre.name) LIKE '%'|| LOWER(:search) || '%' " +
+            "   OR LOWER(CONCAT(a.firstname, ' ', a.lastname)) LIKE '%'|| LOWER(:search) || '%' " +
+            ") " +
             "GROUP BY m " +
             "ORDER BY m.updatedAt DESC")
-    Page<Media> findAllByPartialName(String search, String type, List<Genre> genres, Pageable pageable);
+    Page<Media> findAllByPartialNameTypeAndGenres(String search, String type, List<Genre> genres, Pageable pageable);
+
+    @Query("SELECT m.id, m.name " +
+            "FROM Media m " +
+            "INNER JOIN MediaGenre g ON m = g.media " +
+            "WHERE m.type LIKE '%'|| :type || '%' " +
+            "AND g.genre IN :genres " +
+            "AND LOWER(m.name) LIKE LOWER(:search) || '%' " +
+            "GROUP BY m " +
+            "ORDER BY m.name ASC")
+    Page<Media> findAutoCompletion(String search, String type, List<Genre> genres, Pageable pageable);
 
     @Query("SELECT m " +
             "FROM Media m " +
@@ -34,7 +48,7 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
             "WHERE m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
             "ORDER BY MAX(w.updatedAt) DESC")
-    Page<Media> findAllLastWatched(String type, Pageable pageable);
+    Page<Media> findAllLastWatchedByType(String type, Pageable pageable);
 
     @Query("SELECT m " +
             "FROM Media m " +
@@ -42,7 +56,7 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
             "WHERE m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
             "ORDER BY AVG(r.score) DESC, COUNT(r) DESC")
-    Page<Media> findAllBestRated(String type, Pageable pageable);
+    Page<Media> findAllBestRatedByType(String type, Pageable pageable);
 
     @Query("SELECT m " +
             "FROM Media m " +
@@ -51,18 +65,7 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
             "WHERE m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
             "ORDER BY COUNT(DISTINCT w.user) DESC")
-    Page<Media> findAllMostWatched(String type, Pageable pageable);
-
-    @Query("SELECT m " +
-            "FROM Media m " +
-            "INNER JOIN Video v ON m = v.media " +
-            "INNER JOIN Watched w ON v = w.video " +
-            "WHERE w.user = :user " +
-            "AND m.type LIKE '%'|| :type || '%' " +
-            "GROUP BY m.id " +
-            "HAVING MAX(w.timestamp / v.duration) < 0.98 " +
-            "ORDER BY MAX(w.updatedAt) DESC")
-    Page<Media> findRecentWatched(User user, String type, Pageable pageable);
+    Page<Media> findAllMostWatchedByType(String type, Pageable pageable);
 
     @Query("SELECT m " +
             "FROM Media m " +
@@ -72,12 +75,31 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
             "AND m.type LIKE '%'|| :type || '%' " +
             "GROUP BY m.id " +
             "ORDER BY MAX(w.updatedAt) DESC")
-    Page<Media> findAllRecentWatched(User user, String type, Pageable pageable);
+    Page<Media> findRecentWatchedByUserAndType(User user, String type, Pageable pageable);
+
+    @Query("SELECT m " +
+            "FROM Media m " +
+            "INNER JOIN Video v ON m = v.media " +
+            "INNER JOIN Watched w ON v = w.video " +
+            "WHERE w.user = :user " +
+            "AND m.type LIKE '%'|| :type || '%' " +
+            "GROUP BY m.id " +
+            "ORDER BY MAX(w.updatedAt) DESC")
+    Page<Media> findAllRecentWatchedByUserAndType(User user, String type, Pageable pageable);
 
     @Query("SELECT m " +
             "FROM Media m " +
             "WHERE m.type LIKE '%'|| :type || '%' " +
             "AND m.updatedAt > :threshold " +
             "ORDER BY m.updatedAt DESC")
-    Page<Media> findAllRecentUploaded(String type, Instant threshold, Pageable pageable);
+    Page<Media> findAllRecentUploadedByType(String type, Instant threshold, Pageable pageable);
+
+    @Query("SELECT m " +
+            "FROM Media m " +
+            "INNER JOIN Video v ON m = v.media " +
+            "LEFT JOIN Watched w ON v = w.video " +
+            "AND w.user = :user " +
+            "WHERE w IS NULL " +
+            "GROUP BY m")
+    List<Media> findAllNotWatchedByUser(User user);
 }

@@ -10,6 +10,6 @@ import java.util.Optional;
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
     void deleteAllByUser(User user);
     void deleteAllByUserId(Long id);
-    List<RefreshTokenWithoutUser> findAllByUser(User user);
+    List<RefreshToken> findAllByUser(User user);
     Optional<RefreshToken> findByToken(String token);
 }

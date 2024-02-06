@@ -14,8 +14,8 @@ public class GenreService {
         return genreRepository.findAll();
     }
 
-    public void postGenre(GenreRequest genreRequest) {
-        genreRepository.save(new Genre(genreRequest.getGenre()));
+    public void postGenre(String genre) {
+        genreRepository.save(new Genre(genre));
     }
 
     public void deleteGenre(String genre) {

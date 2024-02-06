@@ -16,8 +16,10 @@ import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 public class MediaGenre {
     @Id
     @ManyToOne
+    @JoinColumn(name = "media_id")
     private Media media;
     @Id
     @ManyToOne
+    @JoinColumn(name = "genre_name")
     private Genre genre;
 }

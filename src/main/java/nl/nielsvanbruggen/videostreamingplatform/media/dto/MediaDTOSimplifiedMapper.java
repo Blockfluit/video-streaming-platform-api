@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.ReviewRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.dto.VideoDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
@@ -18,11 +20,12 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
-    private final ActorDTOMapper actorDTOMapper;
-    private final VideoDTOMapper videoDTOMapper;
+    private final RatingRepository ratingRepository;
     private final RatingDTOMapper ratingDTOMapper;
+    private final ReviewRepository reviewRepository;
     private final ReviewDTOMapper reviewDTOMapper;
     private final VideoRepository videoRepository;
+    private final VideoDTOMapper videoDTOMapper;
     private final WatchedRepository watchedRepository;
 
     @Override
@@ -40,24 +43,22 @@ public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
                 .genres(media.getGenres().stream()
                         .map(MediaGenre::getGenre)
                         .map(Genre::getName)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .actors(media.getActors().stream()
                         .map(MediaActor::getActor)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .videoCount(videoRepository.countByMedia(media))
                 .videos(videoRepository.findFirstByMedia(media).stream()
                         .map(videoDTOMapper)
-                        .collect(Collectors.toList()))
-                .ratings(media.getRatings().stream()
+                        .toList())
+                .ratings(ratingRepository.findAllByMedia(media).stream()
                         .map(ratingDTOMapper)
-                        .collect(Collectors.toList()))
-                .reviews(media.getReviews().stream()
+                        .toList())
+                .reviews(reviewRepository.findAllByMedia(media).stream()
                         .map(reviewDTOMapper)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .views(watchedRepository.totalUniqueViewsByMedia(media))
-                .avgRating(media.getRatings().stream()
-                        .mapToDouble(Rating::getScore)
-                        .average()
+                .avgRating(ratingRepository.averageScoreByMedia(media)
                         .orElse(-1D))
                 .build();
     }

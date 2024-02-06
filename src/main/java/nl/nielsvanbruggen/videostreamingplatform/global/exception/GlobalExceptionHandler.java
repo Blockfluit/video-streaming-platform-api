@@ -84,7 +84,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorInfo> handleDefaultExceptionHandler(HttpServletRequest req, Exception exception) {
+    public ResponseEntity<ErrorInfo> handleDefaultException(HttpServletRequest req, Exception exception) {
         ErrorInfo info = ErrorInfo.builder()
                 .url(req.getRequestURL().toString())
                 .timestamp(Instant.now())

@@ -4,7 +4,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
@@ -15,7 +14,6 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -25,18 +23,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @EnableCaching
 @EnableScheduling
-// TODO: Algorithms should be faster if possible.
 public class RecommendationService {
-    private final UserRepository userRepository;
-    private final WatchedRepository watchedRepository;
-    private final MediaRepository mediaRepository;
-    private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
-    private final static Map<String, Recommendation> recommendations = new ConcurrentHashMap<>();
     private final static int MIN_WATCHED_THRESHOLD = 10;
     private final static int MAX_RETURN_ENTRIES = 50;
+    private final static Map<String, Recommendation> recommendations = new ConcurrentHashMap<>();
+    private final WatchedRepository watchedRepository;
+    private final MediaRepository mediaRepository;
+    private final UserRepository userRepository;
+    private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
 
-    public Recommendation getRecommendations(Authentication authentication) {
-        return recommendations.get(authentication.getName());
+    public Recommendation getRecommendations(User user) {
+        return recommendations.get(user.getUsername());
     }
 
     @PostConstruct
@@ -46,37 +43,38 @@ public class RecommendationService {
 
     @Scheduled(cron = "0 0 0/1 1/1 * *")
     public void updateRecommendations() {
-        userRepository.findAll()
-                .forEach(user -> recommendations.put(user.getUsername(), createRecommendations(user)));
-    }
-
-    private Recommendation createRecommendations(User user) {
-        List<Media> watched = watchedRepository.findAllMediaByUser(user);
-
-        if (watched.size() < MIN_WATCHED_THRESHOLD) {
-            return Recommendation.builder()
+        for(User user: userRepository.findAll()) {
+            Recommendation recommendation = Recommendation.builder()
                     .content(List.of())
                     .input(List.of())
+                    .threshold(MIN_WATCHED_THRESHOLD)
                     .build();
+            List<Media> watched = watchedRepository.findAllMediaByUser(user);
+
+            if (watched.size() > MIN_WATCHED_THRESHOLD) {
+                List<Media> notWatched = mediaRepository.findAllNotWatchedByUser(user);
+                List<Media> recent = mediaRepository.findAllRecentWatchedByUserAndType(user, "", Pageable.ofSize(MIN_WATCHED_THRESHOLD))
+                        .getContent();
+                recommendation = createRecommendations(notWatched, recent);
+            }
+            recommendations.put(user.getUsername(), recommendation);
         }
+    }
 
-        List<Media> notWatched = mediaRepository.findAll().stream()
-                .filter(media -> !watched.contains(media))
-                .toList();
-
-        List<Media> recentMedia = mediaRepository.findAllRecentWatched(user, "", Pageable.ofSize(MIN_WATCHED_THRESHOLD))
-                .getContent();
+    private Recommendation createRecommendations(List<Media> notWatched, List<Media> recent) {
+        Comparator<Object> compareGenresAndActors = Comparator
+                .comparingInt(media ->
+                        getGenreSimilarityScore((Media) media, createGenreMap(recent)) +
+                        getActorSimilarityScore((Media) media, createActorMap(recent)))
+                .reversed();
 
         return Recommendation.builder()
                 .content(notWatched.stream()
-                        .sorted(Comparator
-                                .comparingInt(media -> getGenreSimilarityScore((Media) media, createGenreMap(recentMedia)) +
-                                        getActorSimilarityScore((Media) media, createActorMap(recentMedia)))
-                                .reversed())
+                        .sorted(compareGenresAndActors)
                         .limit(MAX_RETURN_ENTRIES)
                         .map(mediaDTOSimplifiedMapper)
                         .toList())
-                .input(recentMedia.stream()
+                .input(recent.stream()
                         .map(mediaDTOSimplifiedMapper)
                         .toList())
                 .threshold(MIN_WATCHED_THRESHOLD)

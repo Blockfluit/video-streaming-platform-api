@@ -4,7 +4,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.auth.service.AuthenticationService;
-import nl.nielsvanbruggen.videostreamingplatform.config.JwtService;
+import nl.nielsvanbruggen.videostreamingplatform.auth.service.JwtService;
 import nl.nielsvanbruggen.videostreamingplatform.auth.model.RefreshToken;
 import nl.nielsvanbruggen.videostreamingplatform.auth.exception.RefreshTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.auth.service.RefreshTokenService;
@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -22,13 +24,12 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
-    private final UserService userService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(@RequestParam(required = false) String token, @Valid @RequestBody RegisterRequest registerRequest, Authentication authentication) {
         User user = authenticationService.register(registerRequest, token, authentication);
 
-        AuthenticationResponse response =  AuthenticationResponse.builder()
+        AuthenticationResponse response = AuthenticationResponse.builder()
                 .accessToken(jwtService.generateToken(user))
                 .refreshToken(refreshTokenService.createRefreshToken(user).getToken())
                 .build();
@@ -38,11 +39,18 @@ public class AuthenticationController {
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
-        User user = authenticationService.authenticate(request);
+        User user = authenticationService.authenticate(request.getUsername(), request.getPassword());
+        Optional<RefreshToken> entry = refreshTokenService.getRefreshTokens(user).stream()
+                .findFirst();
+
+        RefreshToken refreshToken = entry.isEmpty() ||
+                !refreshTokenService.isTokenValid(entry.get()) ?
+                refreshTokenService.createRefreshToken(user) :
+                entry.get();
 
         AuthenticationResponse response = AuthenticationResponse.builder()
                 .accessToken(jwtService.generateToken(user))
-                .refreshToken(refreshTokenService.createRefreshToken(user).getToken())
+                .refreshToken(refreshToken.getToken())
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -53,7 +61,7 @@ public class AuthenticationController {
         RefreshToken refreshToken = refreshTokenService.getRefreshToken(token)
                 .orElseThrow(() -> new RefreshTokenException("Token does not exist."));
 
-        if(!refreshTokenService.isTokenValid(refreshToken)) {
+        if (!refreshTokenService.isTokenValid(refreshToken)) {
             throw new RefreshTokenException("Token expired.");
         }
 

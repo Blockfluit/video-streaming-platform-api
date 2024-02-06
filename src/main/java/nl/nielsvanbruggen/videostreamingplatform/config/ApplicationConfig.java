@@ -33,6 +33,11 @@ public class ApplicationConfig {
     private final UserRepository userRepository;
 
     @Bean
+    public EnvironmentProperties environmentProperties() {
+        return new EnvironmentProperties();
+    }
+
+    @Bean
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByUsername(username)
                 .orElseThrow();

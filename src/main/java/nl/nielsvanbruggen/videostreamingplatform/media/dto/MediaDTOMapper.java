@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class MediaDTOMapper implements Function<Media, MediaDTO> {
-    private final ActorDTOMapper actorDTOMapper;
     private final VideoDTOMapper videoDTOMapper;
     private final RatingDTOMapper ratingDTOMapper;
     private final ReviewDTOMapper reviewDTOMapper;

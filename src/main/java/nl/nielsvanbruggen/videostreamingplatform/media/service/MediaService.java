@@ -4,6 +4,7 @@ import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.*;
@@ -11,6 +12,7 @@ import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.watched.model.Watched;
 import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
@@ -50,24 +52,24 @@ import java.util.List;
 @Slf4j
 public class MediaService {
     private final VideoRepository videoRepository;
-    private final RatingRepository ratingRepository;
-    private final UserService userService;
     private final MediaRepository mediaRepository;
     private final GenreRepository genreRepository;
     private final ActorRepository actorRepository;
+    private final RatingRepository ratingRepository;
     private final ReviewRepository reviewRepository;
     private final WatchedRepository watchedRepository;
     private final SubtitleRepository subtitleRepository;
     private final MediaGenreRepository mediaGenreRepository;
     private final MediaActorRepository mediaActorRepository;
-    private final MediaDTOMapper mediaDTOMapper;
     private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
+    private final UserService userService;
     private final VideoService videoService;
     private final ImageService imageService;
 
     @Scheduled(cron = "0 0/15 * 1/1 * *")
     @Caching(evict = {
             @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true),
             @CacheEvict(value = "bestRatedMedia", allEntries = true),
             @CacheEvict(value = "mostWatchedMedia", allEntries = true),
             @CacheEvict(value = "lastWatchedMedia", allEntries = true)
@@ -76,53 +78,61 @@ public class MediaService {
         log.debug("Cleared all media cache.");
     }
 
-    public MediaDTO getMedia(int id) {
-        return mediaRepository.findById((long) id)
-                .map(mediaDTOMapper)
+    public Media getMedia(long id) {
+        return mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
     }
 
-    @Cacheable(value = "allMedia", condition = "#search == ''")
+    @Cacheable(value = "allMedia")
     public Page<MediaDTO> getAllMedia(int pageNumber, int pageSize, String type, List<String> genres, String search) {
-        List<Genre> queryGenres = genres.isEmpty() ?
+        List<Genre> tmpGenres = genres.isEmpty() ?
                 genreRepository.findAll() :
                 genres.stream()
                         .map(Genre::new)
                         .toList();
 
-        return mediaRepository.findAllByPartialName(search, type, queryGenres, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllByPartialNameTypeAndGenres(search, type, tmpGenres, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
+    }
+
+    public Page<Media> getAutocompletion(int pageNumber, int pageSize, String type, List<String> genres, String search) {
+        if(search.isEmpty()) return Page.empty(PageRequest.of(pageNumber, pageSize));
+
+        List<Genre> tmpGenres = genres.isEmpty() ?
+                genreRepository.findAll() :
+                genres.stream()
+                        .map(Genre::new)
+                        .toList();
+        return mediaRepository.findAutoCompletion(search, type, tmpGenres, PageRequest.of(pageNumber, pageSize));
     }
 
     @Cacheable(value = "recentUploadedMedia")
     public Page<MediaDTO> getRecentUploaded(int pageNumber, int pageSize, String type) {
-        return mediaRepository.findAllRecentUploaded(type, Instant.now().minus(7, ChronoUnit.DAYS), PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllRecentUploadedByType(type, Instant.now().minus(7, ChronoUnit.DAYS), PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
     @Cacheable(value = "bestRatedMedia")
     public Page<MediaDTO> getBestRated(int pageNumber, int pageSize, String type) {
-        return mediaRepository.findAllBestRated(type, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllBestRatedByType(type, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
     @Cacheable(value = "mostWatchedMedia")
     public Page<MediaDTO> getMostWatched(int pageNumber, int pageSize, String type) {
-        return mediaRepository.findAllMostWatched(type, PageRequest.of(pageNumber, pageSize))
+        return mediaRepository.findAllMostWatchedByType(type, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
     @Cacheable(value = "lastWatchedMedia")
     public Page<MediaDTO> getLastWatched(int pageNumber, int pageSize, String type) {
-         return mediaRepository.findAllLastWatched(type, PageRequest.of(pageNumber, pageSize))
+         return mediaRepository.findAllLastWatchedByType(type, PageRequest.of(pageNumber, pageSize))
                  .map(mediaDTOSimplifiedMapper);
     }
 
 
-    public Page<MediaDTO> getRecentWatched(Authentication authentication, int pageNumber, int pageSize, String type) {
-        User user = userService.getUser(authentication.getName());
-
-        return mediaRepository.findRecentWatched(user, type, PageRequest.of(pageNumber, pageSize))
+    public Page<MediaDTO> getRecentWatched(User user, int pageNumber, int pageSize, String type) {
+        return watchedRepository.findAllWatchedByUserAndGroupedByMediaId(user, type, PageRequest.of(pageNumber, pageSize))
                 .map(mediaDTOSimplifiedMapper);
     }
 
@@ -203,7 +213,10 @@ public class MediaService {
     }
 
     @Transactional
-    @CacheEvict(value = "allMedia", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+    })
     public void patchMedia(Long id, MediaPatchRequest request) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
@@ -267,7 +280,10 @@ public class MediaService {
     }
 
 
-    @CacheEvict(value = "allMedia", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+    })
     public void postMedia(MediaPostRequest request) {
         if(request.getThumbnail() == null) {
             throw new IllegalArgumentException("No thumbnail provided.");
@@ -320,7 +336,10 @@ public class MediaService {
     }
 
     @Transactional
-    @CacheEvict(value = "allMedia", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allMedia", allEntries = true),
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+    })
     public void deleteMedia(Long id) {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));

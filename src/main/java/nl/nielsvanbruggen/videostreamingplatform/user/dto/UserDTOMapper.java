@@ -1,6 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.dto;
 
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.auth.dto.RefreshTokenDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.auth.repository.RefreshTokenRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.watched.dto.WatchedDTOMapper;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class UserDTOMapper implements Function<User, UserDTO> {
     private final WatchedRepository watchedRepository;
     private final WatchedDTOMapper watchedDTOMapper;
+    private final RefreshTokenDTOMapper refreshTokenDTOMapper;
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
@@ -30,9 +32,11 @@ public class UserDTOMapper implements Function<User, UserDTO> {
                 .lastWatched(
                         watchedRepository.findLastWatchedByUser(user, Pageable.ofSize(10)).stream()
                                 .map(watchedDTOMapper)
-                                .collect(Collectors.toList()))
+                                .toList())
                 .refreshTokens(
-                        refreshTokenRepository.findAllByUser(user))
+                        refreshTokenRepository.findAllByUser(user).stream()
+                                .map(refreshTokenDTOMapper)
+                                .toList())
                 .build();
     }
 }

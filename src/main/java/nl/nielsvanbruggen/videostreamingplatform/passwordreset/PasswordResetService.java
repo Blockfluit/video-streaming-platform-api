@@ -23,7 +23,6 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final List<PasswordResetToken> passwordResetTokens = new ArrayList<>();
 
-    // Does not return anything for security reasons.
     public void createToken(PasswordResetPostRequest passwordResetPostRequest) {
         Optional<User> user = userRepository.findByEmail(passwordResetPostRequest.getEmail());
 

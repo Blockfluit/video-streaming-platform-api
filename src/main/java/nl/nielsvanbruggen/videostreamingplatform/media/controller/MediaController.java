@@ -2,10 +2,13 @@ package nl.nielsvanbruggen.videostreamingplatform.media.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOMapper;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
+import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
+import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +22,13 @@ import java.util.List;
 @RequestMapping("/api/v1/media")
 public class MediaController {
     private final MediaService mediaService;
+    private final UserService userService;
+    private final MediaDTOMapper mediaDTOMapper;
 
     @GetMapping("/{id}")
     public ResponseEntity<MediaGetResponse> getMedia(@PathVariable int id) {
         MediaGetResponse response = MediaGetResponse.builder()
-                .media(mediaService.getMedia(id))
+                .media(mediaDTOMapper.apply(mediaService.getMedia(id)))
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -36,6 +41,15 @@ public class MediaController {
                                                       @RequestParam(required = false, defaultValue = "") List<String> genres,
                                                       @RequestParam(required = false, defaultValue = "") String search) {
         return new ResponseEntity<>(mediaService.getAllMedia(pagenumber, pagesize, type, genres, search), HttpStatus.OK);
+    }
+
+    @GetMapping("/auto-completion")
+    public ResponseEntity<Page<Media>> getAutoCompletion(@RequestParam int pagenumber,
+                                                         @RequestParam int pagesize,
+                                                         @RequestParam(required = false, defaultValue = "") String type,
+                                                         @RequestParam(required = false, defaultValue = "") List<String> genres,
+                                                         @RequestParam String search) {
+        return new ResponseEntity<>(mediaService.getAutocompletion(pagenumber, pagesize, type, genres, search), HttpStatus.OK);
     }
 
     @GetMapping("/recent-uploaded")
@@ -71,7 +85,9 @@ public class MediaController {
                                                            @RequestParam int pagenumber,
                                                            @RequestParam int pagesize,
                                                            @RequestParam(required = false, defaultValue = "") String type) {
-        return new ResponseEntity<>(mediaService.getRecentWatched(authentication, pagenumber, pagesize, type), HttpStatus.OK);
+        User user = userService.getUser(authentication.getName());
+
+        return new ResponseEntity<>(mediaService.getRecentWatched(user, pagenumber, pagesize, type), HttpStatus.OK);
     }
 
     @PostMapping("/{id}/rate")
