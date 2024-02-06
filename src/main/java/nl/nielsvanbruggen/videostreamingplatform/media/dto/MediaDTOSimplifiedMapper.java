@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
-    private final ActorDTOMapper actorDTOMapper;
     private final RatingRepository ratingRepository;
     private final RatingDTOMapper ratingDTOMapper;
     private final ReviewRepository reviewRepository;

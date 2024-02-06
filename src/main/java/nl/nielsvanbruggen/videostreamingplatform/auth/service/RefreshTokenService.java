@@ -33,7 +33,7 @@ public class RefreshTokenService {
 
     public boolean isTokenValid(RefreshToken refreshToken) {
         return Instant.now()
-                .isBefore(refreshToken.getExpiration().plus(EXPIRATION_TIME_IN_DAYS, ChronoUnit.DAYS));
+                .isBefore(refreshToken.getExpiration());
     }
 
     @Transactional
