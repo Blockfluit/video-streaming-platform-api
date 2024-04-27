@@ -3,6 +3,12 @@ services:
     image: video-streaming-platform-api:latest
     container_name: streaming_platform_api
     volumes:
+      - type: bind
+        source: /mnt/hdd0/videos
+        target: /videos/videos1
+      - type: bind
+        source: /mnt/hdd0/videos
+        target: /videos/videos2
       - type: volume
         source: streaming_platform_thumbnails
         target: /thumbnails
