@@ -10,10 +10,10 @@ services:
         source: /mnt/hdd0/videos
         target: /videos/videos2
       - type: volume
-        source: streaming_platform_thumbnails
+        source: thumbnails
         target: /thumbnails
       - type: volume
-        source: streaming_platform_snapshots
+        source: snapshots
         target: /snapshots
     ports:
       - 8085:8085/tcp
@@ -25,11 +25,11 @@ services:
     container_name: streaming_platform_db
     volumes:
       - type: volume
-        source: streaming_platform_db
+        source: db
         target: /var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
-  streaming_platform_thumbnails:
-  streaming_platform_snapshots:
-  streaming_platform_db:
+  thumbnails:
+  snapshots:
+  db:
