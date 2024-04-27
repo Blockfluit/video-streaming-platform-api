@@ -33,6 +33,7 @@ public interface WatchedRepository extends JpaRepository<Watched, WatchedId> {
     List<Watched> findLastWatchedByUser(@Param("user") User user, Pageable pageable);
 
     List<Watched> deleteByVideoIn(List<Video> videos);
+    List<Watched> deleteAllByVideo(Video video);
 
     @Query("SELECT m2 " +
             "FROM Media m2 " +

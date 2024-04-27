@@ -13,6 +13,7 @@ import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ public class VideoService {
     private final static ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final VideoRepository videoRepository;
     private final SubtitleRepository subtitleRepository;
+    private final WatchedRepository watchedRepository;
     private final EnvironmentProperties env;
 
     public Video getVideo(long videoId) {
@@ -74,6 +76,7 @@ public class VideoService {
         // Deletes all videos from db that don't exist in the folder.
         dbVideos.forEach(video -> {
             if (!parsedVideos.contains(video.getPath())) {
+                watchedRepository.deleteAllByVideo(video);
                 subtitleRepository.deleteAllByVideo(video);
                 videoRepository.delete(video);
             }

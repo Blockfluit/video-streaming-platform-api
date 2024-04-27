@@ -1,0 +1,29 @@
+services:
+  api:
+    image: video-streaming-platform-api:latest
+    container_name: streaming_platform_api
+    volumes:
+      - type: volume
+        source: streaming_platform_thumbnails
+        target: /thumbnails
+      - type: volume
+        source: streaming_platform_snapshots
+        target: /snapshots
+    ports:
+      - 8085:8085/tcp
+    depends_on:
+      - db
+    restart: unless-stopped
+  db:
+    image: postgres:latest
+    container_name: streaming_platform_db
+    volumes:
+      - type: volume
+        source: streaming_platform_db
+        target: /var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  streaming_platform_thumbnails:
+  streaming_platform_snapshots:
+  streaming_platform_db:
