@@ -13,4 +13,6 @@ FROM eclipse-temurin:17-jdk-alpine
 
 COPY --from=build /workspace/app/target/*.jar app.jar
 
+RUN apk add --no-cache ffmpeg
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
