@@ -5,6 +5,7 @@ import com.sun.jdi.InternalException;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -91,6 +92,8 @@ public class GlobalExceptionHandler {
                 .message(exception.getMessage())
                 .build();
 
-        return new ResponseEntity<>(info, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(info);
     }
 }

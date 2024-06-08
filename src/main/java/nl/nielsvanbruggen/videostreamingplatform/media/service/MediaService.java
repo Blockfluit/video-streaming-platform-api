@@ -4,15 +4,14 @@ import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.*;
+import nl.nielsvanbruggen.videostreamingplatform.stream.VideoTokenRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
-import nl.nielsvanbruggen.videostreamingplatform.watched.model.Watched;
 import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
@@ -23,7 +22,6 @@ import nl.nielsvanbruggen.videostreamingplatform.genre.GenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.controller.*;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
 import nl.nielsvanbruggen.videostreamingplatform.global.service.ImageService;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.*;
@@ -59,6 +57,7 @@ public class MediaService {
     private final ReviewRepository reviewRepository;
     private final WatchedRepository watchedRepository;
     private final SubtitleRepository subtitleRepository;
+    private final VideoTokenRepository videoTokenRepository;
     private final MediaGenreRepository mediaGenreRepository;
     private final MediaActorRepository mediaActorRepository;
     private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
@@ -341,11 +340,14 @@ public class MediaService {
             @CacheEvict(value = "recentUploadedMedia", allEntries = true)
     })
     public void deleteMedia(Long id) {
+        // TODO: Can be made way cleaner by use cascade delete.
+
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
 
         List<Video> videos = videoRepository.findAllByMedia(media);
 
+        videoTokenRepository.deleteByVideoIn(videos);
         watchedRepository.deleteByVideoIn(videos);
         subtitleRepository.deleteByVideoIn(videos);
         ratingRepository.deleteByMedia(media);
