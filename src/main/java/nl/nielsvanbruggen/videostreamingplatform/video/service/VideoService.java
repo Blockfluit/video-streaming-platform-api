@@ -8,6 +8,7 @@ import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import nl.nielsvanbruggen.videostreamingplatform.config.EnvironmentProperties;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
+import nl.nielsvanbruggen.videostreamingplatform.stream.VideoTokenRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.exception.VideoException;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 public class VideoService {
     private final static ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final VideoRepository videoRepository;
+    private final VideoTokenRepository videoTokenRepository;
     private final SubtitleRepository subtitleRepository;
     private final WatchedRepository watchedRepository;
     private final EnvironmentProperties env;
@@ -76,6 +78,7 @@ public class VideoService {
         // Deletes all videos from db that don't exist in the folder.
         dbVideos.forEach(video -> {
             if (!parsedVideos.contains(video.getPath())) {
+                videoTokenRepository.deleteAllByVideo(video);
                 watchedRepository.deleteAllByVideo(video);
                 subtitleRepository.deleteAllByVideo(video);
                 videoRepository.delete(video);
