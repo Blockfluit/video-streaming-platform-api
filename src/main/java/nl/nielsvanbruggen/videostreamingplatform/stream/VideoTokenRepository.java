@@ -11,4 +11,5 @@ public interface VideoTokenRepository extends JpaRepository<VideoToken, Long> {
     void deleteAllByUser(User user);
     Optional<VideoToken> findByToken(String token);
     void deleteByVideoIn(List<Video> videos);
+    void deleteAllByVideo(Video video);
 }
