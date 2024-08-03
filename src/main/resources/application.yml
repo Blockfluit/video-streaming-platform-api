@@ -1,0 +1,40 @@
+spring:
+  server:
+    port: 8080
+    tomcat:
+      max-http-form-post-size: ${MAX_HTTP_FORM_POST_SIZE:10MB}
+      max-swallow-size: ${MAX_SWALLOW_SIZE:10MB}
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
+
+secret-key: ${SECRET_KEY}
+
+paths:
+  videos:
+    root: ${PATH_VIDEOS_ROOT}
+  thumbnail:
+    root: ${PATH_THUMBNAIL_ROOT}
+  snapshot:
+    root: ${PATH_SNAPSHOT_ROOT}
+
+snapshot:
+  width: 600
+    height: 900
+
+
+ffprobe:
+  path: ${FFMPEG_PATH}
+ffmpeg:
+  path: ${FFPROBE_PATH}
