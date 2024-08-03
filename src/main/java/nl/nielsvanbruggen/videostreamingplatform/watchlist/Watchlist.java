@@ -18,7 +18,8 @@ import java.time.Instant;
 @IdClass(WatchlistId.class)
 public class Watchlist {
     @Id
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @JoinColumn(nullable = false)
     private User user;
     @Id
     @ManyToOne

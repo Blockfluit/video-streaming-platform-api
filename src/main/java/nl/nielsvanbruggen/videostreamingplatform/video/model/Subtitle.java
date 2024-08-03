@@ -19,7 +19,7 @@ public class Subtitle {
     private String srcLang;
     private String path;
     private boolean defaultSub;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "video_id")
     private Video video;
 }

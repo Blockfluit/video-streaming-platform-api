@@ -34,6 +34,10 @@ public class AuthenticationController {
                 .refreshToken(refreshTokenService.createRefreshToken(user).getToken())
                 .build();
 
+        ResponseEntity.ok()
+                .body(response)
+
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

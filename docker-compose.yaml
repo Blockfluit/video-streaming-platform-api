@@ -16,10 +16,12 @@ services:
         source: snapshots
         target: /snapshots
     ports:
-      - 8085:8085/tcp
+      - 8085:8080/tcp
     depends_on:
       - db
     restart: unless-stopped
+    env_file:
+      - stack.env
   db:
     image: postgres:latest
     container_name: streaming_platform_db

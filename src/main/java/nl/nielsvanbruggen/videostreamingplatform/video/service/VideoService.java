@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
-import nl.nielsvanbruggen.videostreamingplatform.config.EnvironmentProperties;
+import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
 import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.stream.VideoTokenRepository;
@@ -27,20 +27,28 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 public class VideoService {
-    private final static ExecutorService executorService = Executors.newFixedThreadPool(10);
+    @Value("${ffmpeg.path}")
+    private String ffMpegPath;
+    @Value("${ffprobe.path}")
+    private String ffProbePath;
+    private static final Pattern subtitlePattern = Pattern.compile("(\\p{Alnum}+)_([a-z]{2})_(\\p{Alnum}+)");
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final VideoRepository videoRepository;
     private final VideoTokenRepository videoTokenRepository;
     private final SubtitleRepository subtitleRepository;
     private final WatchedRepository watchedRepository;
-    private final EnvironmentProperties env;
+    private final PathProperties pathProperties;
 
     public Video getVideo(long videoId) {
         return videoRepository.findById(videoId)
@@ -52,23 +60,35 @@ public class VideoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Subtitle with given id does not exist."));
     }
 
-    public void updateVideos(Media media) throws IOException {
-        Path dir = Files.walk(Paths.get(env.getVideos().get("root")), 2, FileVisitOption.FOLLOW_LINKS)
-                .filter(file -> file.getFileName().toString().equals(media.getName()))
-                .findFirst()
-                .orElseThrow(() -> new IOException("No folder on system associated with this name"));
+    public void updateVideos(Media media) throws VideoException {
+        Path dir;
+
+        try (Stream<Path> pathStream = Files.walk(Paths.get(pathProperties.getVideos().getRoot()), 2, FileVisitOption.FOLLOW_LINKS)) {
+            dir = pathStream
+                    .filter(file -> file.getFileName().toString().equals(media.getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new NoSuchElementException("No folder on system associated with media: " + media.getName()));
+        } catch (IOException e) {
+            throw new VideoException(e);
+        }
+
         List<Path> videos = new ArrayList<>();
         List<Path> subtitles = new ArrayList<>();
 
         //Finds all videos and subtitles on disk
-        Files.walk(dir, 2).forEach(file -> {
-            if (FilenameUtils.getExtension(file.getFileName().toString()).equals("mp4")) {
-                videos.add(file);
-            }
-            if (FilenameUtils.getExtension(file.getFileName().toString()).equals("vtt")) {
-                subtitles.add(file);
-            }
-        });
+        try(Stream<Path> pathStream = Files.walk(dir, 2)) {
+            pathStream.forEach(file -> {
+                if (FilenameUtils.getExtension(file.getFileName().toString()).equals("mp4")) {
+                    videos.add(file);
+                }
+                if (FilenameUtils.getExtension(file.getFileName().toString()).equals("vtt")) {
+                    subtitles.add(file);
+                }
+            });
+        } catch (IOException e) {
+            throw new VideoException(e);
+        }
+
         Collections.sort(videos);
 
         List<String> parsedVideos = videos.stream()
@@ -111,8 +131,8 @@ public class VideoService {
 
     private void createSnapshot(Video video, Path videoPath) {
         try {
-            FFprobe ffprobe = new FFprobe(env.getFfprobe().get("path"));
-            FFmpeg ffmpeg = new FFmpeg(env.getFfmpeg().get("path"));
+            FFprobe ffprobe = new FFprobe(ffProbePath);
+            FFmpeg ffmpeg = new FFmpeg(ffMpegPath);
             float duration = (float) ffprobe.probe(videoPath.toString()).getFormat().duration;
             video.setDuration(duration);
 
@@ -120,7 +140,7 @@ public class VideoService {
             ffmpeg.run(new FFmpegBuilder()
                     .setStartOffset(screenshotAtTime, TimeUnit.SECONDS)
                     .setInput(videoPath.toString())
-                    .addOutput(env.getSnapshot().get("root") + video.getName() + ".jpg")
+                    .addOutput(pathProperties.getSnapshot().getRoot() + video.getName() + ".jpg")
                     .setFrames(1)
                     .setVideoFilter("scale=1000:-1")
                     .setVideoCodec("mjpeg")
@@ -137,15 +157,20 @@ public class VideoService {
 
     private void persistSubtitles(Video video, Path videoPath, List<Path> subtitles) {
         List<Subtitle> subs = subtitles.stream()
-                .filter(subtitle -> subtitle.toString().split("_")[0]
+                .filter(subtitle -> subtitlePattern.matcher(subtitle.toString()).find())
+                .filter(subtitle -> subtitlePattern.matcher(subtitle.toString()).group(1)
                         .equals(videoPath.toString().replace(".mp4", "")))
-                .map(subtitle -> Subtitle.builder()
-                        .defaultSub(subtitle.getFileName().toString().split("_")[1].equals("en"))
-                        .srcLang(subtitle.getFileName().toString().split("_")[1])
-                        .label(subtitle.getFileName().toString().split("_")[2].replace(".vtt", ""))
-                        .path(parsePath(subtitle))
-                        .video(video)
-                        .build())
+                .map(subtitle -> {
+                        Matcher matcher = subtitlePattern.matcher(subtitle.getFileName().toString());
+
+                        return Subtitle.builder()
+                                .defaultSub(matcher.group(2).equals("en"))
+                                .srcLang(matcher.group(2))
+                                .label(matcher.group(3))
+                                .path(parsePath(subtitle))
+                                .video(video)
+                                .build();
+                })
                 .toList();
         subtitleRepository.saveAll(subs);
     }
@@ -153,6 +178,6 @@ public class VideoService {
     private String parsePath(Path path) {
         return path.toString()
                 .replace("\\", "/")
-                .replace(env.getVideos().get("root"), "/");
+                .replace(pathProperties.getVideos().getRoot(), "/");
     }
 }
