@@ -8,4 +8,8 @@ public class VideoException extends RuntimeException {
     public VideoException(Throwable throwable) {
         super(throwable);
     }
+
+    public VideoException(String message, Throwable throwable) {
+        super(message, throwable);
+    }
 }

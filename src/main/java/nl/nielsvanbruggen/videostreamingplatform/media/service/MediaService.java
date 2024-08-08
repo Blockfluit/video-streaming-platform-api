@@ -4,15 +4,6 @@ import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.*;
-import nl.nielsvanbruggen.videostreamingplatform.stream.VideoTokenRepository;
-import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
-import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
-import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
-import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
-import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.actor.repository.ActorRepository;
@@ -22,11 +13,24 @@ import nl.nielsvanbruggen.videostreamingplatform.genre.GenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.controller.*;
-import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
-import nl.nielsvanbruggen.videostreamingplatform.global.service.ImageService;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.*;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
+import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMapper;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Review;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.ReviewRepository;
+import nl.nielsvanbruggen.videostreamingplatform.service.ImageService;
+import nl.nielsvanbruggen.videostreamingplatform.stream.VideoTokenRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
+import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -267,11 +271,7 @@ public class MediaService {
         }
 
         if(request.isUpdateFiles()) {
-            try {
-                videoService.updateVideos(media);
-            } catch (IOException ex) {
-                throw new InternalException(ex.getMessage());
-            }
+            videoService.updateVideos(media);
         }
 
         media.setUpdatedAt(Instant.now());
@@ -283,6 +283,7 @@ public class MediaService {
             @CacheEvict(value = "allMedia", allEntries = true),
             @CacheEvict(value = "recentUploadedMedia", allEntries = true)
     })
+    @Transactional
     public void postMedia(MediaPostRequest request) {
         if(request.getThumbnail() == null) {
             throw new IllegalArgumentException("No thumbnail provided.");
@@ -324,12 +325,8 @@ public class MediaService {
                 .build();
 
         mediaRepository.save(media);
-        try {
-            videoService.updateVideos(media);
-        } catch (IOException ex) {
-            mediaRepository.delete(media);
-          throw new InternalException(ex.getMessage());
-        }
+        videoService.updateVideos(media);
+
         genres.forEach(genre -> mediaGenreRepository.save(new MediaGenre(media, genre)));
         actors.forEach(actor -> mediaActorRepository.save(new MediaActor(media, actor)));
     }
@@ -340,22 +337,9 @@ public class MediaService {
             @CacheEvict(value = "recentUploadedMedia", allEntries = true)
     })
     public void deleteMedia(Long id) {
-        // TODO: Can be made way cleaner by use cascade delete.
-
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Id does not exist."));
 
-        List<Video> videos = videoRepository.findAllByMedia(media);
-
-        videoTokenRepository.deleteByVideoIn(videos);
-        watchedRepository.deleteByVideoIn(videos);
-        subtitleRepository.deleteByVideoIn(videos);
-        ratingRepository.deleteByMedia(media);
-        reviewRepository.deleteByMedia(media);
-        mediaGenreRepository.deleteByMedia(media);
-        mediaActorRepository.deleteByMedia(media);
-
-        videoRepository.deleteAll(videos);
         mediaRepository.delete(media);
     }
 }

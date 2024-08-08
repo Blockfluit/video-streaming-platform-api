@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.invitetoken.InviteToken;
 import nl.nielsvanbruggen.videostreamingplatform.invitetoken.InviteTokenRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
-import nl.nielsvanbruggen.videostreamingplatform.global.util.TokenGeneratorUtil;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -13,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @SpringBootApplication
 @RequiredArgsConstructor
@@ -31,7 +31,7 @@ public class VideoStreamingPlatformApplication {
 				return;
 			}
 			InviteToken masterToken = InviteToken.builder()
-					.token(TokenGeneratorUtil.generate(64))
+					.token(UUID.randomUUID().toString())
 					.createdAt(Instant.now())
 					.used(false)
 					.master(true)

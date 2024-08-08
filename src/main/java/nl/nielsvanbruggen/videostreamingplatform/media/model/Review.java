@@ -21,14 +21,14 @@ public class Review {
     private String title;
     @Column(columnDefinition = "TEXT")
     private String comment;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id")
     private User user;
     @Column(name = "created_at")
     private Instant createdAt;
     @Column(name = "updated_at")
     private Instant updatedAt;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "media_id")
     private Media media;
 }

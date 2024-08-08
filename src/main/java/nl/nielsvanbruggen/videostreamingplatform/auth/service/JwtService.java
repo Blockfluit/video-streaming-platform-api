@@ -4,11 +4,11 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.config.EnvironmentProperties;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidJwtTokenException;
+import nl.nielsvanbruggen.videostreamingplatform.exception.InvalidJwtTokenException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.security.Key;
 import java.time.Instant;
@@ -21,8 +21,9 @@ import java.util.function.Function;
 @Service
 @RequiredArgsConstructor
 public class JwtService {
+    @Value("${secret-key}")
+    private String jwtSecret;
     private static final int EXPIRATION_TIME_MILLIS = 1000 * 60 * 5;
-    private final EnvironmentProperties env;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -78,7 +79,7 @@ public class JwtService {
     }
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(env.getSecretKey());
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

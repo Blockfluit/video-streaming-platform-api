@@ -16,11 +16,11 @@ import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 @IdClass(RatingId.class)
 public class Rating {
     @Id
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "media_id")
     private Media media;
     @Id
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id")
     private User user;
     private double score;

@@ -2,13 +2,13 @@ package nl.nielsvanbruggen.videostreamingplatform.stream;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.global.util.TokenGeneratorUtil;
-import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,10 +33,10 @@ public class VideoTokenService {
 
     @Transactional
     public VideoToken createVideoToken(User user, Video video) {
-        videoTokenRepository.deleteAllByUser(user);
+        videoTokenRepository.deleteByUser(user);
 
         VideoToken token = VideoToken.builder()
-                .token(TokenGeneratorUtil.generate(128))
+                .token(UUID.randomUUID().toString())
                 .video(video)
                 .createdAt(Instant.now())
                 .expiration(getExpiration())

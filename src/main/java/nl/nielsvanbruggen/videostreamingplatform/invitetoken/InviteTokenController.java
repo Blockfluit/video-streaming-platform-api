@@ -3,9 +3,8 @@ package nl.nielsvanbruggen.videostreamingplatform.invitetoken;
 import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.ErrorInfo;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.GlobalExceptionHandler;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
+import nl.nielsvanbruggen.videostreamingplatform.exception.ErrorInfo;
+import nl.nielsvanbruggen.videostreamingplatform.exception.InvalidTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -14,8 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @RestController

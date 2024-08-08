@@ -7,6 +7,7 @@ import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.service.SubtitleService;
 import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ public class StreamController {
     private final VideoTokenService videoTokenService;
     private final StreamService streamService;
     private final MediaService mediaService;
+    private final SubtitleService subtitleService;
     private final VideoService videoService;
     private final UserService userService;
 
@@ -40,7 +42,7 @@ public class StreamController {
 
     @GetMapping("/subtitle/{id}")
     public ResponseEntity<byte[]> getSubtitle(@PathVariable Long id) {
-        Subtitle subtitle = videoService.getSubtitle(id);
+        Subtitle subtitle = subtitleService.getSubtitle(id);
         return streamService.getSubtitle(subtitle);
     }
 

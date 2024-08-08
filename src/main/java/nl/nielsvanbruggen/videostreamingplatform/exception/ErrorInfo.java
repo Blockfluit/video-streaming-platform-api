@@ -1,4 +1,4 @@
-package nl.nielsvanbruggen.videostreamingplatform.global.exception;
+package nl.nielsvanbruggen.videostreamingplatform.exception;
 
 import lombok.Builder;
 import lombok.Data;

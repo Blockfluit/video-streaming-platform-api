@@ -6,34 +6,32 @@ import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.stream.VideoTokenRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.exception.VideoException;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
-import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
-import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.String.format;
 
 @Service
 @RequiredArgsConstructor
@@ -45,51 +43,40 @@ public class VideoService {
     private static final Pattern subtitlePattern = Pattern.compile("(\\p{Alnum}+)_([a-z]{2})_(\\p{Alnum}+)");
     private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final VideoRepository videoRepository;
-    private final VideoTokenRepository videoTokenRepository;
-    private final SubtitleRepository subtitleRepository;
-    private final WatchedRepository watchedRepository;
+    private final SubtitleService subtitleService;
     private final PathProperties pathProperties;
 
     public Video getVideo(long videoId) {
         return videoRepository.findById(videoId)
-                .orElseThrow(() -> new VideoException(String.format("Video with id: %d does not exist", videoId)));
-    }
-
-    public Subtitle getSubtitle(long subtitleId) {
-        return subtitleRepository.findById(subtitleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Subtitle with given id does not exist."));
+                .orElseThrow(() -> new VideoException(format("Video with id: %d does not exist", videoId)));
     }
 
     public void updateVideos(Media media) throws VideoException {
-        Path dir;
+        File mediaDir = Path.of(pathProperties.getVideos().getRoot(), media.getName()).toFile();
 
-        try (Stream<Path> pathStream = Files.walk(Paths.get(pathProperties.getVideos().getRoot()), 2, FileVisitOption.FOLLOW_LINKS)) {
-            dir = pathStream
-                    .filter(file -> file.getFileName().toString().equals(media.getName()))
-                    .findFirst()
-                    .orElseThrow(() -> new NoSuchElementException("No folder on system associated with media: " + media.getName()));
-        } catch (IOException e) {
-            throw new VideoException(e);
+        if(!mediaDir.exists() || !mediaDir.isDirectory()) {
+            throw new VideoException(format("media: %s does not have files.", media.getName()));
         }
 
-        List<Path> videos = new ArrayList<>();
-        List<Path> subtitles = new ArrayList<>();
+        List<Path> videos = new LinkedList<>();
+        List<Path> subtitles = new LinkedList<>();
 
-        //Finds all videos and subtitles on disk
-        try(Stream<Path> pathStream = Files.walk(dir, 2)) {
-            pathStream.forEach(file -> {
-                if (FilenameUtils.getExtension(file.getFileName().toString()).equals("mp4")) {
-                    videos.add(file);
-                }
-                if (FilenameUtils.getExtension(file.getFileName().toString()).equals("vtt")) {
-                    subtitles.add(file);
-                }
-            });
+        // Find all videos and subtitles of media on disk.
+        try (Stream<Path> pathStream = Files.walk(mediaDir.toPath(), MAX_VALUE, FileVisitOption.FOLLOW_LINKS)) {
+            pathStream
+                    .forEach(file -> {
+                        if (FilenameUtils.getExtension(file.getFileName().toString()).equals("mp4")) {
+                            videos.add(file);
+                        }
+                        if (FilenameUtils.getExtension(file.getFileName().toString()).equals("vtt")) {
+                            subtitles.add(file);
+                        }
+                    });
+
+            Collections.sort(videos);
         } catch (IOException e) {
-            throw new VideoException(e);
+            throw new VideoException(format("Media: %s", media.getName()), e);
         }
-
-        Collections.sort(videos);
 
         List<String> parsedVideos = videos.stream()
                 .map(this::parsePath)
@@ -98,9 +85,6 @@ public class VideoService {
         // Deletes all videos from db that don't exist in the folder.
         dbVideos.forEach(video -> {
             if (!parsedVideos.contains(video.getPath())) {
-                videoTokenRepository.deleteAllByVideo(video);
-                watchedRepository.deleteAllByVideo(video);
-                subtitleRepository.deleteAllByVideo(video);
                 videoRepository.delete(video);
             }
         });
@@ -172,12 +156,13 @@ public class VideoService {
                                 .build();
                 })
                 .toList();
-        subtitleRepository.saveAll(subs);
+
+        subtitleService.saveAll(subs);
     }
 
     private String parsePath(Path path) {
         return path.toString()
                 .replace("\\", "/")
-                .replace(pathProperties.getVideos().getRoot(), "/");
+                .replace(pathProperties.getVideos().getRoot(), "");
     }
 }

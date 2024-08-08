@@ -6,14 +6,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "paths")
-public class PathProperties {
-    private Path videos;
-    private Path thumbnail;
-    private Path snapshot;
-
-    @Data
-    public static class Path {
-        private String root;
-    }
+@ConfigurationProperties("snapshot")
+public class SnapshotProperties {
+    private int width;
+    private int height;
 }

@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: ${ACTIVE_PROFILE:dev}
   server:
     port: 8080
     tomcat:
@@ -8,12 +10,13 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
-    database: postgresql
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format-sql: true
   servlet:
     multipart:
       max-file-size: ${MAX_FILE_SIZE:10MB}
@@ -31,7 +34,7 @@ paths:
 
 snapshot:
   width: 600
-    height: 900
+  height: 900
 
 
 ffprobe:

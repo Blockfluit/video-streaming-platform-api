@@ -1,5 +1,6 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.dto.UserActivityCountByHourMapper;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
@@ -27,6 +28,7 @@ public class UserActivityService {
     private final static Map<String, Instant> userActivity = new ConcurrentHashMap<>();
 
     @Scheduled(cron = "0 0/15 * 1/1 * *")
+    @Transactional
     public void persistUserActivity() {
         userActivity.forEach((userName, timestamp) -> {
             if(timestamp.isAfter(Instant.now().minus(15, ChronoUnit.MINUTES))) {
