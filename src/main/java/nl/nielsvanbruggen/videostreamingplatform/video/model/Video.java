@@ -26,9 +26,9 @@ public class Video {
     private int season;
     private String snapshot;
     @Column(name = "x_resolution")
-    private int xResolution;
+    private Integer xResolution;
     @Column(name = "y_resolution")
-    private int yResolution;
+    private Integer yResolution;
     @OnDelete(action = OnDeleteAction.CASCADE)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "media_id")

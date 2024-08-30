@@ -23,6 +23,7 @@ services:
     depends_on:
       - db
     restart: unless-stopped
+    env_file: ./stack.env
   db:
     image: postgres:latest
     container_name: streaming_platform_db
