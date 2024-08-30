@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk-alpine as build
+FROM eclipse-temurin:21-jdk-alpine as build
 
 WORKDIR /workspace/app
 
@@ -10,7 +10,7 @@ COPY src src
 RUN chmod +x ./mvnm &&\
     ./mvnw install -DskipTests
 
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:21-jdk-alpine
 
 COPY --from=build /workspace/app/target/*.jar app.jar
 
