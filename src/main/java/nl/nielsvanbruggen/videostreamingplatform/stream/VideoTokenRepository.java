@@ -8,9 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface VideoTokenRepository extends JpaRepository<VideoToken, Long> {
-//    @Query("DELETE FROM VideoToken t " +
-//            "WHERE t.user = :user")
-    void deleteByUser(User user);
+    void deleteAllByUser(User user);
     Optional<VideoToken> findByToken(String token);
     void deleteByVideoIn(List<Video> videos);
     void deleteAllByVideo(Video video);

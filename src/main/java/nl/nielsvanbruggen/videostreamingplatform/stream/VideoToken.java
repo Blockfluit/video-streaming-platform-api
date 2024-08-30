@@ -26,11 +26,11 @@ public class VideoToken {
     private Instant createdAt;
     private Instant expiration;
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "video_id")
     private Video video;
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 }

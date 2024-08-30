@@ -22,12 +22,10 @@ import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepositor
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.ReviewRepository;
 import nl.nielsvanbruggen.videostreamingplatform.service.ImageService;
-import nl.nielsvanbruggen.videostreamingplatform.stream.VideoTokenRepository;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
-import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
 import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
@@ -60,8 +58,6 @@ public class MediaService {
     private final RatingRepository ratingRepository;
     private final ReviewRepository reviewRepository;
     private final WatchedRepository watchedRepository;
-    private final SubtitleRepository subtitleRepository;
-    private final VideoTokenRepository videoTokenRepository;
     private final MediaGenreRepository mediaGenreRepository;
     private final MediaActorRepository mediaActorRepository;
     private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
@@ -218,7 +214,10 @@ public class MediaService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "allMedia", allEntries = true),
-            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true),
+            @CacheEvict(value = "bestRatedMedia", allEntries = true),
+            @CacheEvict(value = "mostWatchedMedia", allEntries = true),
+            @CacheEvict(value = "lastWatchedMedia", allEntries = true)
     })
     public void patchMedia(Long id, MediaPatchRequest request) {
         Media media = mediaRepository.findById(id)
@@ -274,16 +273,19 @@ public class MediaService {
             videoService.updateVideos(media);
         }
 
+        media.setHidden(request.isHidden());
         media.setUpdatedAt(Instant.now());
         mediaRepository.save(media);
     }
 
-
+    @Transactional
     @Caching(evict = {
             @CacheEvict(value = "allMedia", allEntries = true),
-            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true),
+            @CacheEvict(value = "bestRatedMedia", allEntries = true),
+            @CacheEvict(value = "mostWatchedMedia", allEntries = true),
+            @CacheEvict(value = "lastWatchedMedia", allEntries = true)
     })
-    @Transactional
     public void postMedia(MediaPostRequest request) {
         if(request.getThumbnail() == null) {
             throw new IllegalArgumentException("No thumbnail provided.");
@@ -322,6 +324,7 @@ public class MediaService {
                 .year(request.getYear())
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
+                .hidden(request.isHidden())
                 .build();
 
         mediaRepository.save(media);
@@ -334,7 +337,10 @@ public class MediaService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "allMedia", allEntries = true),
-            @CacheEvict(value = "recentUploadedMedia", allEntries = true)
+            @CacheEvict(value = "recentUploadedMedia", allEntries = true),
+            @CacheEvict(value = "bestRatedMedia", allEntries = true),
+            @CacheEvict(value = "mostWatchedMedia", allEntries = true),
+            @CacheEvict(value = "lastWatchedMedia", allEntries = true)
     })
     public void deleteMedia(Long id) {
         Media media = mediaRepository.findById(id)

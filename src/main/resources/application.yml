@@ -13,10 +13,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-#    show-sql: true
-#    properties:
-#      hibernate:
-#        format-sql: true
   servlet:
     multipart:
       max-file-size: ${MAX_FILE_SIZE:10MB}
@@ -26,18 +22,16 @@ secret-key: ${SECRET_KEY}
 
 paths:
   videos:
-    root: ${PATH_VIDEOS_ROOT}
+    root: ${PATH_VIDEOS_ROOT:./videos}
   thumbnail:
-    root: ${PATH_THUMBNAIL_ROOT}
+    root: ${PATH_THUMBNAIL_ROOT:./thumbnails}
   snapshot:
-    root: ${PATH_SNAPSHOT_ROOT}
+    root: ${PATH_SNAPSHOT_ROOT:./snapshots}
+  ffmpeg:
+    root: ${FFPROBE_PATH:/usr/bin/ffmpeg}
+  ffprobe:
+    root: ${FFMPEG_PATH:/usr/bin/ffprobe}
 
 snapshot:
   width: 600
   height: 900
-
-
-ffprobe:
-  path: ${FFMPEG_PATH}
-ffmpeg:
-  path: ${FFPROBE_PATH}

@@ -11,6 +11,8 @@ public class PathProperties {
     private Path videos;
     private Path thumbnail;
     private Path snapshot;
+    private Path ffmpeg;
+    private Path ffprobe;
 
     @Data
     public static class Path {

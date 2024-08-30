@@ -1,10 +1,11 @@
 package nl.nielsvanbruggen.videostreamingplatform.video.service;
 
 import com.sun.jdi.InternalException;
-import lombok.RequiredArgsConstructor;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
+import net.bramp.ffmpeg.probe.FFmpegProbeResult;
+import net.bramp.ffmpeg.probe.FFmpegStream;
 import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.video.exception.VideoException;
@@ -12,7 +13,6 @@ import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -34,17 +34,22 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
 
 @Service
-@RequiredArgsConstructor
 public class VideoService {
-    @Value("${ffmpeg.path}")
-    private String ffMpegPath;
-    @Value("${ffprobe.path}")
-    private String ffProbePath;
     private static final Pattern subtitlePattern = Pattern.compile("(\\p{Alnum}+)_([a-z]{2})_(\\p{Alnum}+)");
     private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final VideoRepository videoRepository;
     private final SubtitleService subtitleService;
     private final PathProperties pathProperties;
+    private final FFmpeg ffmpeg;
+    private final FFprobe ffprobe;
+
+    public VideoService(VideoRepository videoRepository, SubtitleService subtitleService, PathProperties pathProperties) throws IOException {
+        this.videoRepository = videoRepository;
+        this.subtitleService = subtitleService;
+        this.pathProperties = pathProperties;
+        this.ffmpeg = new FFmpeg(pathProperties.getFfmpeg().getRoot());
+        this.ffprobe = new FFprobe(pathProperties.getFfprobe().getRoot());
+    }
 
     public Video getVideo(long videoId) {
         return videoRepository.findById(videoId)
@@ -115,16 +120,22 @@ public class VideoService {
 
     private void createSnapshot(Video video, Path videoPath) {
         try {
-            FFprobe ffprobe = new FFprobe(ffProbePath);
-            FFmpeg ffmpeg = new FFmpeg(ffMpegPath);
-            float duration = (float) ffprobe.probe(videoPath.toString()).getFormat().duration;
-            video.setDuration(duration);
+            FFmpegProbeResult probeResult = ffprobe.probe(videoPath.toString());
+            float duration = (float) probeResult.getFormat().duration;
+            // This assumes the first stream is the video stream.
+            FFmpegStream videoStream = probeResult.getStreams().getFirst();
 
-            final int screenshotAtTime = (int) duration / 10;
+            video.setDuration(duration);
+            video.setXResolution(videoStream.width);
+            video.setYResolution(videoStream.height);
+
+            int screenshotAtTime = (int) duration / 10;
+            Path snapshotPath = Path.of(pathProperties.getSnapshot().getRoot(), video.getName() + ".jpg");
+
             ffmpeg.run(new FFmpegBuilder()
                     .setStartOffset(screenshotAtTime, TimeUnit.SECONDS)
                     .setInput(videoPath.toString())
-                    .addOutput(pathProperties.getSnapshot().getRoot() + video.getName() + ".jpg")
+                    .addOutput(snapshotPath.toString())
                     .setFrames(1)
                     .setVideoFilter("scale=1000:-1")
                     .setVideoCodec("mjpeg")

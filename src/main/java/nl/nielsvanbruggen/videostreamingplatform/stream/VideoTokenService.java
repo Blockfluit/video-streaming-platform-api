@@ -33,7 +33,7 @@ public class VideoTokenService {
 
     @Transactional
     public VideoToken createVideoToken(User user, Video video) {
-        videoTokenRepository.deleteByUser(user);
+        videoTokenRepository.deleteAllByVideo(video);
 
         VideoToken token = VideoToken.builder()
                 .token(UUID.randomUUID().toString())
