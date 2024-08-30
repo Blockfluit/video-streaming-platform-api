@@ -9,6 +9,9 @@ services:
       - type: bind
         source: /mnt/hdd0/videos
         target: /videos/videos2
+      - type: bind
+        source: /mnt/hdd1/videos
+        target: /videos/videos3
       - type: volume
         source: thumbnails
         target: /thumbnails
@@ -16,7 +19,7 @@ services:
         source: snapshots
         target: /snapshots
     ports:
-      - 8085:8085/tcp
+      - 8085:8080/tcp
     depends_on:
       - db
     restart: unless-stopped
@@ -28,6 +31,13 @@ services:
         source: db
         target: /var/lib/postgresql/data
     restart: unless-stopped
+  adminer:
+    image: adminer:latest
+    ports:
+      - 8090:8080/tcp
+    restart: unless-stopped
+    depends_on:
+      - db
 
 volumes:
   thumbnails:

@@ -21,4 +21,5 @@ public class MediaPostRequest {
     private Type type;
     @NotBlank(message = "Plot missing.")
     private String plot;
+    private boolean hidden;
 }

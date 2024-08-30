@@ -4,7 +4,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.auth.model.RefreshToken;
 import nl.nielsvanbruggen.videostreamingplatform.auth.repository.RefreshTokenRepository;
-import nl.nielsvanbruggen.videostreamingplatform.global.util.TokenGeneratorUtil;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +11,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +41,7 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteAllByUser(user);
 
         RefreshToken token = RefreshToken.builder()
-                .token(TokenGeneratorUtil.generate(254))
+                .token(UUID.randomUUID().toString())
                 .createdAt(Instant.now())
                 .expiration(Instant.now().plus(EXPIRATION_TIME_IN_DAYS, ChronoUnit.DAYS))
                 .user(user)

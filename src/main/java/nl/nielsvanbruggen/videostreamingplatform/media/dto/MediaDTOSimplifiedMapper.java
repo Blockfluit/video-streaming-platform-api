@@ -1,21 +1,18 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 
 import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.ReviewRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.dto.VideoDTOMapper;
-import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
-import nl.nielsvanbruggen.videostreamingplatform.actor.dto.ActorDTOMapper;
-import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
+import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -38,6 +35,7 @@ public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
                 .plot(media.getPlot())
                 .type(media.getType())
                 .year(media.getYear())
+                .hidden(media.isHidden())
                 .updatedAt(media.getUpdatedAt())
                 .createdAt(media.getCreatedAt())
                 .genres(media.getGenres().stream()

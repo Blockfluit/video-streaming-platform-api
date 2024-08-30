@@ -2,16 +2,11 @@ package nl.nielsvanbruggen.videostreamingplatform.stream;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.nielsvanbruggen.videostreamingplatform.config.EnvironmentProperties;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.ResourceNotFoundException;
-import nl.nielsvanbruggen.videostreamingplatform.global.util.MimeTypeUtil;
+import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
+import nl.nielsvanbruggen.videostreamingplatform.util.MimeTypeUtil;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
-import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
-import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,17 +23,17 @@ import java.nio.file.Path;
 @RequiredArgsConstructor
 public class StreamService {
     private final static int MAX_CHUNK_SIZE_BYTES = 1024 * 1024;
-    private final EnvironmentProperties env;
+    private final PathProperties pathProperties;
 
     public ResponseEntity<?> getVideo(Video video, HttpHeaders headers) {
-        Path absolutePath = Path.of(env.getVideos().get("root") + video.getPath());
+        Path absolutePath = Path.of(pathProperties.getVideos().getRoot(), video.getPath());
 
         long tot = totalBytes(absolutePath);
         return createStreamResponseEntity(absolutePath, headers, tot);
     }
 
     public ResponseEntity<byte[]> getSubtitle(Subtitle subtitle) {
-        Path absolutePath = Path.of(env.getVideos().get("root") + subtitle.getPath());
+        Path absolutePath = Path.of(pathProperties.getVideos().getRoot(), subtitle.getPath());
 
         long tot = totalBytes(absolutePath);
         byte[] bytes = readBytes(absolutePath, 0, tot);
@@ -46,8 +41,7 @@ public class StreamService {
     }
 
     public ResponseEntity<byte[]> getThumbnail(Media media) {
-        String path = media.getThumbnail();
-        Path absolutePath = Path.of(env.getThumbnail().get("root") + path);
+        Path absolutePath = Path.of(pathProperties.getThumbnail().getRoot(), media.getThumbnail());
 
         long tot = totalBytes(absolutePath);
         byte[] bytes = readBytes(absolutePath, 0, tot);
@@ -55,7 +49,7 @@ public class StreamService {
     }
 
     public ResponseEntity<byte[]> getSnapshot(Video video) {
-        Path absolutePath = Path.of(env.getSnapshot().get("root") + video.getSnapshot());
+        Path absolutePath = Path.of(pathProperties.getSnapshot().getRoot(), video.getSnapshot());
 
         long tot = totalBytes(absolutePath);
         byte[] bytes = readBytes(absolutePath, 0, tot);
@@ -64,7 +58,7 @@ public class StreamService {
 
     private ResponseEntity<?> createStreamResponseEntity(Path path, HttpHeaders headers, long tot) {
         // Handles case were no range header is provided.
-        if (headers.getRange().size() == 0) {
+        if (headers.getRange().isEmpty()) {
             return createInitialResponse(path, tot);
         }
 
@@ -87,7 +81,7 @@ public class StreamService {
         responseHeaders.add("Accept-Ranges", "bytes");
         responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
         responseHeaders.add("Content-Length", Long.toString(tot));
-        responseHeaders.add("Cache-Control", "public, max-age=31536000");
+        responseHeaders.add("Cache-Control", "no-cache");
 
         return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.OK);
     }
@@ -97,7 +91,7 @@ public class StreamService {
         responseHeaders.add("Accept-Ranges", "bytes");
         responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
         responseHeaders.add("Content-Length", Long.toString(tot));
-        responseHeaders.add("Cache-Control", "no-store, no-cache");
+        responseHeaders.add("Cache-Control", "no-cache");
 
         return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
     }
@@ -108,7 +102,7 @@ public class StreamService {
         responseHeaders.add("Accept-Ranges", "bytes");
         responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
         responseHeaders.add("Content-Length", String.valueOf(bytes.length));
-        responseHeaders.add("Cache-Control", "no-store, no-cache");
+        responseHeaders.add("Cache-Control", "no-cache");
 
         return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.PARTIAL_CONTENT);
     }

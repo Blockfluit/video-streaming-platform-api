@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.watched.id.WatchedId;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 
@@ -19,10 +21,12 @@ import java.time.Instant;
 @IdClass(WatchedId.class)
 public class Watched {
     @Id
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
     @Id
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @ManyToOne
     @JoinColumn(name = "video_id")
     private Video video;

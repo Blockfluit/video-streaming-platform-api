@@ -19,6 +19,7 @@ public class MediaDTO {
     private String plot;
     private Type type;
     private int year;
+    private boolean hidden;
     private Instant updatedAt;
     private Instant createdAt;
     private int videoCount;

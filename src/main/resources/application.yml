@@ -1,0 +1,37 @@
+spring:
+  profiles:
+    active: ${ACTIVE_PROFILE:dev}
+  server:
+    port: 8080
+    tomcat:
+      max-http-form-post-size: ${MAX_HTTP_FORM_POST_SIZE:10MB}
+      max-swallow-size: ${MAX_SWALLOW_SIZE:10MB}
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
+
+secret-key: ${SECRET_KEY}
+
+paths:
+  videos:
+    root: ${PATH_VIDEOS_ROOT:./videos}
+  thumbnail:
+    root: ${PATH_THUMBNAIL_ROOT:./thumbnails}
+  snapshot:
+    root: ${PATH_SNAPSHOT_ROOT:./snapshots}
+  ffmpeg:
+    root: ${FFPROBE_PATH:/usr/bin/ffmpeg}
+  ffprobe:
+    root: ${FFMPEG_PATH:/usr/bin/ffprobe}
+
+snapshot:
+  width: 600
+  height: 900
