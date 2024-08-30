@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 
@@ -21,14 +23,16 @@ public class Review {
     private String title;
     @Column(columnDefinition = "TEXT")
     private String comment;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
     @Column(name = "created_at")
     private Instant createdAt;
     @Column(name = "updated_at")
     private Instant updatedAt;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne
     @JoinColumn(name = "media_id")
     private Media media;
 }
