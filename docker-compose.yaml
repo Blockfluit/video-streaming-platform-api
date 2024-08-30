@@ -9,6 +9,9 @@ services:
       - type: bind
         source: /mnt/hdd0/videos
         target: /videos/videos2
+      - type: bind
+        source: /mnt/hdd1/videos
+        target: /videos/videos3
       - type: volume
         source: thumbnails
         target: /thumbnails
@@ -20,8 +23,6 @@ services:
     depends_on:
       - db
     restart: unless-stopped
-    env_file:
-      - stack.env
   db:
     image: postgres:latest
     container_name: streaming_platform_db
@@ -30,6 +31,13 @@ services:
         source: db
         target: /var/lib/postgresql/data
     restart: unless-stopped
+  adminer:
+    image: adminer:latest
+    ports:
+      - 8090:8080/tcp
+    restart: unless-stopped
+    depends_on:
+      - db
 
 volumes:
   thumbnails:
