@@ -14,6 +14,6 @@ public class VideoDTO {
         private int index;
         private int season;
         private List<SubtitleDTO> subtitle;
-        private int xResolution;
-        private int yResolution;
+        private Integer xResolution;
+        private Integer yResolution;
 }
