@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -57,10 +58,20 @@ public class VideoService {
     }
 
     public void updateVideos(Media media) throws VideoException {
-        File mediaDir = Path.of(pathProperties.getVideos().getRoot(), media.getName()).toFile();
+        File mediaDir;
 
-        if(!mediaDir.exists() || !mediaDir.isDirectory()) {
-            throw new VideoException(format("media: %s does not have files.", media.getName()));
+        try (Stream<Path> pathStream = Files.walk(Paths.get(pathProperties.getVideos().getRoot()), 2, FileVisitOption.FOLLOW_LINKS)) {
+            mediaDir = pathStream
+                    .filter(file -> file.getFileName().toString().equals(media.getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new VideoException("No folder on system associated with media: " + media.getName()))
+                    .toFile();
+        } catch (IOException e) {
+            throw new VideoException(e);
+        }
+
+        if(!mediaDir.isDirectory()) {
+            throw new VideoException("Object found on disk is not a folder");
         }
 
         List<Path> videos = new LinkedList<>();
