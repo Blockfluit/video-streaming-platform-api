@@ -19,4 +19,5 @@ public class MediaPatchRequest {
     private List<IdIndex> order;
     private boolean updateFiles;
     private boolean hidden;
+    private boolean updateTimestamp;
 }
