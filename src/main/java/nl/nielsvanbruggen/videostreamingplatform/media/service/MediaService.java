@@ -273,8 +273,11 @@ public class MediaService {
             videoService.updateVideos(media);
         }
 
+        if(request.isUpdateTimestamp()) {
+            media.setUpdatedAt(Instant.now());
+        }
+
         media.setHidden(request.isHidden());
-        media.setUpdatedAt(Instant.now());
         mediaRepository.save(media);
     }
 
