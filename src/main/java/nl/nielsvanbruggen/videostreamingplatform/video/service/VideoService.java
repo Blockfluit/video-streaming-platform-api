@@ -11,6 +11,7 @@ import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.video.exception.VideoException;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.repository.SubtitleRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
@@ -36,17 +37,17 @@ import static java.lang.String.format;
 
 @Service
 public class VideoService {
-    private static final Pattern subtitlePattern = Pattern.compile("(\\p{Alnum}+)_([a-z]{2})_(\\p{Alnum}+)");
+    private static final Pattern subtitlePattern = Pattern.compile("(.+)_([a-z]{2})_(\\p{Alnum}+)(.\\p{Alpha}+)");
     private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final VideoRepository videoRepository;
-    private final SubtitleService subtitleService;
+    private final SubtitleRepository subtitleRepository;
     private final PathProperties pathProperties;
     private final FFmpeg ffmpeg;
     private final FFprobe ffprobe;
 
-    public VideoService(VideoRepository videoRepository, SubtitleService subtitleService, PathProperties pathProperties) throws IOException {
+    public VideoService(VideoRepository videoRepository, SubtitleRepository subtitleRepository, PathProperties pathProperties) throws IOException {
         this.videoRepository = videoRepository;
-        this.subtitleService = subtitleService;
+        this.subtitleRepository = subtitleRepository;
         this.pathProperties = pathProperties;
         this.ffmpeg = new FFmpeg(pathProperties.getFfmpeg().getRoot());
         this.ffprobe = new FFprobe(pathProperties.getFfprobe().getRoot());
@@ -163,23 +164,20 @@ public class VideoService {
 
     private void persistSubtitles(Video video, Path videoPath, List<Path> subtitles) {
         List<Subtitle> subs = subtitles.stream()
-                .filter(subtitle -> subtitlePattern.matcher(subtitle.toString()).find())
-                .filter(subtitle -> subtitlePattern.matcher(subtitle.toString()).group(1)
-                        .equals(videoPath.toString().replace(".mp4", "")))
-                .map(subtitle -> {
-                        Matcher matcher = subtitlePattern.matcher(subtitle.getFileName().toString());
-
-                        return Subtitle.builder()
-                                .defaultSub(matcher.group(2).equals("en"))
-                                .srcLang(matcher.group(2))
-                                .label(matcher.group(3))
-                                .path(parsePath(subtitle))
-                                .video(video)
-                                .build();
-                })
+                .map(subtitle -> subtitlePattern.matcher(subtitle.toString()))
+                .filter(Matcher::find)
+                .filter(matcher -> matcher.group(1).equals(videoPath.toString().replace(".mp4", "")))
+                .map(matcher -> Subtitle.builder()
+                        .defaultSub(matcher.group(2).equals("en"))
+                        .srcLang(matcher.group(2))
+                        .label(matcher.group(3))
+                        .path(parsePath(Path.of(matcher.group(0))))
+                        .video(video)
+                        .build())
                 .toList();
 
-        subtitleService.saveAll(subs);
+        subtitleRepository.deleteAllByVideo(video);
+        subtitleRepository.saveAll(subs);
     }
 
     private String parsePath(Path path) {

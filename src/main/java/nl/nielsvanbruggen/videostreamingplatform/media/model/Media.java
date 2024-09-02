@@ -1,10 +1,7 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
@@ -20,6 +17,7 @@ import java.util.List;
 public class Media {
     @Id
     @GeneratedValue
+    @EqualsAndHashCode.Include
     private long id;
     private String name;
     @Column(name = "created_at")
@@ -44,11 +42,4 @@ public class Media {
     private List<Review> reviews;
     @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
     private List<Rating> ratings;
-
-    @Override
-    public boolean equals(Object object) {
-        if(object == null) return false;
-        if(!(object instanceof Media media)) return false;
-        return media.getId() == this.getId();
-    }
 }

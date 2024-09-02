@@ -13,7 +13,7 @@ public class VideoDTO {
         private double duration;
         private int index;
         private int season;
-        private List<SubtitleDTO> subtitle;
+        private List<SubtitleDTO> subtitles;
         private Integer xResolution;
         private Integer yResolution;
 }

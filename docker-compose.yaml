@@ -1,46 +1,50 @@
 services:
   api:
     image: video-streaming-platform-api:latest
-    container_name: streaming_platform_api
+    container_name: streaming-platform-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.streaming-platform-api.rule=Host(`api-tv.hs.nielsb.nl`)"
+      - "traefik.http.routers.streaming-platform-api.entrypoints=websecure"
+      - "traefik.http.routers.streaming-platform-api.tls=true"
+      - "traefik.http.routers.streaming-platform-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.streaming-platform-api.loadbalancer.server.port=8080"
     volumes:
-      - type: bind
-        source: /mnt/hdd0/videos
-        target: /videos/videos1
-      - type: bind
-        source: /mnt/hdd0/videos
-        target: /videos/videos2
-      - type: bind
-        source: /mnt/hdd1/videos
-        target: /videos/videos3
-      - type: volume
-        source: thumbnails
-        target: /thumbnails
-      - type: volume
-        source: snapshots
-        target: /snapshots
-    ports:
-      - 8085:8080/tcp
+      - /mnt/hdd0/videos:/videos/videos1
+      - /mnt/hdd0/videos:/videos/videos2
+      - /mnt/hdd1/videos:/videos/videos3
+      - /srv/docker/streaming-platform/api/thumbnails:/thumbnails
+      - /srv/docker/streaming-platform/api/snapshots:/snapshots
     depends_on:
       - db
     restart: unless-stopped
     env_file: ./stack.env
+    networks:
+      - traefik
+      - internal
+
   db:
     image: postgres:latest
-    container_name: streaming_platform_db
+    container_name: streaming-platform-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
     volumes:
-      - type: volume
-        source: db
-        target: /var/lib/postgresql/data
+      - /srv/docker/streaming-platform/db:/var/lib/postgresql/data
     restart: unless-stopped
+    networks:
+      - internal
+
   adminer:
     image: adminer:latest
-    ports:
-      - 8090:8080/tcp
+    container_name: streaming-platform-adminer
     restart: unless-stopped
     depends_on:
       - db
+    networks:
+      - internal
 
-volumes:
-  thumbnails:
-  snapshots:
-  db:
+networks:
+  traefik:
+    external: true
+  internal:
