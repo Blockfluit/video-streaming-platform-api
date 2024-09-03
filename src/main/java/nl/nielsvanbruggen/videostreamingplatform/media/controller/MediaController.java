@@ -8,11 +8,11 @@ import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
-import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +24,12 @@ public class MediaController {
     private final MediaService mediaService;
     private final UserService userService;
     private final MediaDTOMapper mediaDTOMapper;
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        // Allows for more entries in form data.
+        binder.setAutoGrowCollectionLimit(1000);
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<MediaGetResponse> getMedia(@PathVariable int id) {
