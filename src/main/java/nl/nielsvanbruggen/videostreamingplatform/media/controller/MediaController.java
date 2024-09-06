@@ -8,7 +8,6 @@ import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
-import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -115,13 +114,13 @@ public class MediaController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> postMedia(@Valid @ModelAttribute MediaPostRequest mediaPostRequest) {
+    public ResponseEntity<Void> postMedia(@Valid @RequestBody MediaPostRequest mediaPostRequest) {
         mediaService.postMedia(mediaPostRequest);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Void> patchMedia(@PathVariable Long id, @ModelAttribute MediaPatchRequest mediaPatchRequest) {
+    public ResponseEntity<Void> patchMedia(@PathVariable Long id, @RequestBody MediaPatchRequest mediaPatchRequest) {
         mediaService.patchMedia(id, mediaPatchRequest);
         return new ResponseEntity<>(HttpStatus.OK);
     }

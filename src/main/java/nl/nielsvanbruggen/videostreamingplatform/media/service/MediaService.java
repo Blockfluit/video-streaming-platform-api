@@ -2,6 +2,7 @@ package nl.nielsvanbruggen.videostreamingplatform.media.service;
 
 import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
+import jakarta.xml.bind.DatatypeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.actor.model.Actor;
@@ -29,7 +30,6 @@ import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
 import nl.nielsvanbruggen.videostreamingplatform.watched.repository.WatchedRepository;
-import org.apache.commons.io.FilenameUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -41,7 +41,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -254,7 +256,7 @@ public class MediaService {
         if(request.getThumbnail() != null) {
             String imageName = media.getName() + "_" + media.getYear() + ".jpg";
             try {
-                imageService.saveImage(request.getThumbnail().getInputStream(), imageName);
+                imageService.saveImage(request.getThumbnail(), imageName);
             } catch (IOException ex) {
                 throw new InternalException("Saving thumbnail went wrong.");
             }
@@ -293,9 +295,6 @@ public class MediaService {
         if(request.getThumbnail() == null) {
             throw new IllegalArgumentException("No thumbnail provided.");
         }
-        if(!List.of("png", "jpg", "jpeg").contains(FilenameUtils.getExtension(request.getThumbnail().getOriginalFilename()))) {
-            throw new IllegalArgumentException("Invalid file extension.");
-        }
 
         if(mediaRepository.findByName(request.getName()).isPresent()) {
             throw new IllegalArgumentException("Media already exists.");
@@ -313,7 +312,10 @@ public class MediaService {
 
         String imageName = request.getName() + "_" + request.getYear() + ".jpg";
         try {
-            imageService.saveImage(request.getThumbnail().getInputStream(), imageName);
+            String[] parts = request.getThumbnail().split(",");
+            InputStream is = new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(parts[1]));
+
+            imageService.saveImage(is, imageName);
         } catch (IOException ex) {
             throw new InternalException("Saving thumbnail went wrong.");
         }

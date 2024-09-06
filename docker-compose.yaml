@@ -4,6 +4,7 @@ services:
     container_name: streaming-platform-api
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
       - "traefik.http.routers.streaming-platform-api.rule=Host(`api-tv.hs.nielsb.nl`)"
       - "traefik.http.routers.streaming-platform-api.entrypoints=websecure"
       - "traefik.http.routers.streaming-platform-api.tls=true"
