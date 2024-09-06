@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -13,7 +12,7 @@ public class MediaPostRequest {
     @NotBlank(message = "Name missing.")
     private String name;
     private String trailer;
-    private MultipartFile thumbnail;
+    private String thumbnail;
     private List<String> genres;
     private List<Long> actors;
     @NotNull

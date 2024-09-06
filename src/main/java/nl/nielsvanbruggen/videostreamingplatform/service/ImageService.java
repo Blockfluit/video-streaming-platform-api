@@ -1,5 +1,6 @@
 package nl.nielsvanbruggen.videostreamingplatform.service;
 
+import jakarta.xml.bind.DatatypeConverter;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
 import nl.nielsvanbruggen.videostreamingplatform.config.SnapshotProperties;
@@ -8,16 +9,32 @@ import org.springframework.stereotype.Component;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 @RequiredArgsConstructor
 public class ImageService {
+    private static final Pattern base64ImagePattern = Pattern.compile("data:image/(.+);base64");
+
     private final SnapshotProperties snapshotProperties;
     private final PathProperties pathProperties;
+
+    public void saveImage(String base64Image, String imageName) throws IOException {
+        String[] parts = base64Image.split(",");
+        Matcher matcher = base64ImagePattern.matcher(parts[0]);
+
+        if(parts.length < 2 || !matcher.find()) throw new IOException("Base 64 image is not formatted correctly");
+
+        InputStream is = new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(parts[1]));
+
+        this.saveImage(is, imageName);
+    }
 
     public void saveImage(InputStream imageStream, String imageName) throws IOException {
         try {
