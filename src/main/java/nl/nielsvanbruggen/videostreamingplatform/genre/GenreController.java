@@ -2,13 +2,12 @@ package nl.nielsvanbruggen.videostreamingplatform.genre;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.actor.controller.AllActorsGetResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/genres")
+@RequestMapping("/genres")
 @RequiredArgsConstructor
 public class GenreController {
     private final GenreService genreService;

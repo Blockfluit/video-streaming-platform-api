@@ -3,7 +3,7 @@ package nl.nielsvanbruggen.videostreamingplatform.stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
-import nl.nielsvanbruggen.videostreamingplatform.util.MimeTypeUtil;
+import nl.nielsvanbruggen.videostreamingplatform.utils.MimeTypeUtil;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;

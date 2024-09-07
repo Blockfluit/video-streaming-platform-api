@@ -39,6 +39,14 @@ services:
   adminer:
     image: adminer:latest
     container_name: streaming-platform-adminer
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.streaming-platform-adminer.rule=PathPrefix(`/streaming-platform-adminer`)"
+      - "traefik.http.middlewares.streaming-platform-adminer-stripprefix.stripprefix.prefixes=/streaming-platform-adminer"
+      - "traefik.http.routers.streaming-platform-adminer.middlewares=streaming-platform-adminer-stripprefix"
+      - "traefik.http.routers.streaming-platform-api.entrypoints=web"
+      - "traefik.http.services.streaming-platform-api.loadbalancer.server.port=8080"
     restart: unless-stopped
     depends_on:
       - db
