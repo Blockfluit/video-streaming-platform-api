@@ -13,7 +13,6 @@ public class MediaPostRequest {
     @NotBlank(message = "Name missing.")
     private String name;
     private String imdbId;
-    @NotBlank(message = "Trailer missing.")
     private String trailer;
     @IsBase64Image
     @NotNull

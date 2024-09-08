@@ -2,8 +2,10 @@ package nl.nielsvanbruggen.videostreamingplatform.media.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.media.controller.MediaPatchRequest;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.IdIndex;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
 import nl.nielsvanbruggen.videostreamingplatform.person.model.ContextRole;
@@ -13,15 +15,17 @@ import nl.nielsvanbruggen.videostreamingplatform.person.repository.MediaPersonRe
 import nl.nielsvanbruggen.videostreamingplatform.person.repository.PersonRepository;
 import nl.nielsvanbruggen.videostreamingplatform.scraper.models.ImdbTitle;
 import nl.nielsvanbruggen.videostreamingplatform.scraper.services.ScrapeServiceConnector;
-import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.video.repository.VideoRepository;
 import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UpdateService {
@@ -71,13 +75,17 @@ public class UpdateService {
         media.setHidden(request.isHidden());
 
         if(request.getOrder() != null) {
-            request.getOrder()
-                    .forEach(entry -> {
-                        Video video = videoRepository.findById(entry.getId())
-                                .orElseThrow(() -> new IllegalArgumentException("Video does not exist."));
-                        video.setIndex(entry.getIndex());
-                        videoRepository.save(video);
-                    });
+            Map<Long, Integer> indexLookup = request.getOrder().stream()
+                    .collect(Collectors.toMap(
+                            IdIndex::getId,
+                            IdIndex::getIndex
+                    ));
+
+            videoRepository.saveAll(
+                    videoRepository.findAllById(request.getOrder().stream().map(IdIndex::getId).toList()).stream()
+                            .peek(video -> video.setIndex(indexLookup.get(video.getId())))
+                            .toList()
+            );
         }
 
         if(request.isUpdateFiles()) {
@@ -94,12 +102,15 @@ public class UpdateService {
     }
 
     private void handlePersons(Media media, Set<Long> personIds, ContextRole role) {
+        log.debug("Handling persons ({}) with role: ({})", personIds.size(), role);
+
         List<Person> dbPersons = personRepository.findAllById(personIds);
 
-         mediaPersonRepository.findAllByMediaAndContextRole(media, role).stream()
-                 .map(MediaPerson::getPerson)
-                .filter(person -> !personIds.contains(person.getId()))
-                .forEach(person -> mediaPersonRepository.deleteByPersonAndContextRole(person, role));
+        mediaPersonRepository.deleteAll(
+                mediaPersonRepository.findAllByMediaAndContextRole(media, role).stream()
+                        .filter(mediaPerson -> !personIds.contains(mediaPerson.getPerson().getId()))
+                        .toList()
+        );
 
          List<MediaPerson> mediaPersons = dbPersons.stream()
                  .map(person -> MediaPerson.builder()
@@ -110,5 +121,7 @@ public class UpdateService {
                  .toList();
 
          mediaPersonRepository.saveAll(mediaPersons);
+
+        log.debug("Finished handling persons with role: ({})", role);
     }
 }

@@ -39,7 +39,7 @@ public class MediaController {
                                                       @RequestParam(required = false, defaultValue = "") List<String> genres,
                                                       @RequestParam(required = false, defaultValue = "") String search,
                                                       Authentication authentication) {
-        var page = mediaService.getAllMedia(pagenumber, pagesize, type, genres, search, userService.isAdmin(authentication));
+        var page = mediaService.getMedia(pagenumber, pagesize, type, genres, search, userService.isAdmin(authentication));
 
         return ResponseEntity.ok(page);
     }

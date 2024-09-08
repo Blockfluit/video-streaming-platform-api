@@ -18,7 +18,6 @@ public class Media {
     @GeneratedValue
     @EqualsAndHashCode.Include
     private long id;
-    @Column(unique = true)
     private String imdbId;
     private Double imdbRating;
     private Long imdbRatingsAmount;

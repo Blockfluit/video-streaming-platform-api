@@ -53,7 +53,7 @@ public class MediaService {
         return mediaRepository.save(media);
     }
 
-    public Page<MediaDTO> getAllMedia(int pageNumber, int pageSize, String type, List<String> genres, String search, boolean overrideHidden) {
+    public Page<MediaDTO> getMedia(int pageNumber, int pageSize, String type, List<String> genres, String search, boolean overrideHidden) {
         List<Genre> tmpGenres = genres.isEmpty() ?
                 genreRepository.findAll() :
                 genres.stream()
@@ -187,8 +187,10 @@ public class MediaService {
         }
 
         if(request.isScrapeImdb()) {
+            log.info("Updating existing media: ({}) with data from Imdb...", media.getName());
             updateService.updateImdb(media, request);
         } else {
+            log.info("Updating existing media: ({})...", media.getName());
             updateService.updateDefault(media, request);
         }
     }
@@ -205,17 +207,15 @@ public class MediaService {
             throw new IllegalArgumentException("Media with this imdb id already exists.");
         }
 
-        if(!request.isScrapeImdb() && (request.getThumbnail() == null || request.getYear() == null || request.getPlot() == null)) {
-            throw new IllegalArgumentException("Mandatory fields where not provided.");
-        }
-
         if(request.isScrapeImdb() && request.getImdbId() == null) {
             throw new IllegalArgumentException("Must provide a imdb id in order to scrape.");
         }
 
         if(request.isScrapeImdb()) {
+            log.info("Creating new media: ({}) and aggregating with data from Imdb... ", request.getName());
             uploadService.imdbUpload(request, user);
         } else {
+            log.info("Creating new media: ({})...", request.getName());
             uploadService.defaultUpload(request, user);
         }
     }

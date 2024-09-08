@@ -4,6 +4,7 @@ import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import jakarta.xml.bind.DatatypeConverter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.genre.Genre;
 import nl.nielsvanbruggen.videostreamingplatform.genre.GenreRepository;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
@@ -31,6 +32,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UploadService {
@@ -63,7 +65,7 @@ public class UploadService {
                 .imdbRatingsAmount(title.getImdbRatingsAmount())
                 .build();
 
-        mediaRepository.saveAndFlush(media);
+        mediaRepository.save(media);
 
         handleGenres(media, title.getGenres());
         handleImdbNames(media, title.getCreators(), ContextRole.CREATOR);
@@ -90,7 +92,7 @@ public class UploadService {
                 .year(request.getYear())
                 .build();
 
-        mediaRepository.saveAndFlush(media);
+        mediaRepository.save(media);
 
         handleGenres(media, request.getGenres());
 
@@ -128,6 +130,8 @@ public class UploadService {
     }
 
     public List<Person> handleImdbNames(Media media, List<ImdbName> names, ContextRole role) {
+        log.debug("Handling Imdb names ({}) with role: ({})", names.size(), role);
+
         List<Person> tmp = names.stream()
                 .map(name -> Person.builder()
                         .imdbId(name.getImdbId())
@@ -150,6 +154,8 @@ public class UploadService {
                                 .build())
                         .toList()
         );
+
+        log.debug("Finished handling Imdb names with role: ({})", role);
 
         return dbPersons;
     }

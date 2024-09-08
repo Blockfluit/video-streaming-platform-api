@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.person.controller.PersonPostRequest;
 import nl.nielsvanbruggen.videostreamingplatform.person.model.Person;
 import nl.nielsvanbruggen.videostreamingplatform.person.repository.PersonRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -18,8 +20,8 @@ import java.util.stream.Collectors;
 public class PersonService {
     private final PersonRepository personRepository;
 
-    public List<Person> getAllPersons() {
-        return personRepository.findAll();
+    public Page<Person> getPersons(int pagenumber, int pagesize, String search) {
+        return personRepository.findAllByPartialName(search, PageRequest.of(pagenumber, pagesize));
     }
 
     /**
