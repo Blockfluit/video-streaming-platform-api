@@ -28,8 +28,8 @@ public class ScrapeServiceConnector {
         return webClientBuilder.build()
                 .get()
                 .uri(builder -> builder
-                        .pathSegment("imdb", "title", imdbId)
-                        .build())
+                        .path("/imdb/title/{imdbId}")
+                        .build(imdbId))
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(ImdbTitle.class)
@@ -45,7 +45,7 @@ public class ScrapeServiceConnector {
         return webClientBuilder.build()
                 .get()
                 .uri(builder -> builder
-                        .pathSegment("imdb", "search")
+                        .path("/imdb/search/")
                         .queryParam("title", search)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
