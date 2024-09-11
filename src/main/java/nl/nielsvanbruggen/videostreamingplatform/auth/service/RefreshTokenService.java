@@ -1,6 +1,5 @@
 package nl.nielsvanbruggen.videostreamingplatform.auth.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.auth.model.RefreshToken;
 import nl.nielsvanbruggen.videostreamingplatform.auth.repository.RefreshTokenRepository;
@@ -36,7 +35,6 @@ public class RefreshTokenService {
                 .isBefore(refreshToken.getExpiration());
     }
 
-    @Transactional
     public RefreshToken createRefreshToken(User user) {
         refreshTokenRepository.deleteAllByUser(user);
 
