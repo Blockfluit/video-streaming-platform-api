@@ -45,7 +45,7 @@ public class ScrapeServiceConnector {
         return webClientBuilder.build()
                 .get()
                 .uri(builder -> builder
-                        .pathSegment("imdb", "search", "title")
+                        .pathSegment("imdb", "search")
                         .queryParam("title", search)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
