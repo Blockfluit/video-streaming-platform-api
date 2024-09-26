@@ -11,6 +11,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Data
 @Builder
@@ -19,12 +20,15 @@ import java.time.Instant;
 @Entity
 @Table(name = "video_token")
 public class VideoToken {
+    private final static int VIDEO_EXPIRATION_IN_MINUTES = 60;
+
     @Id
     @GeneratedValue
     private Long id;
     private String token;
     private Instant createdAt;
-    private Instant expiration;
+    @Builder.Default
+    private Instant expiration = getNewExpiration();
     @OnDelete(action = OnDeleteAction.CASCADE)
     @ManyToOne
     @JoinColumn(name = "video_id")
@@ -33,4 +37,16 @@ public class VideoToken {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    public boolean isValid(Video video) {
+        return this.video.equals(video) && expiration.isBefore(Instant.now());
+    }
+
+    public void resetExpiration() {
+        this.expiration = getNewExpiration();
+    }
+
+    private static Instant getNewExpiration() {
+        return Instant.now().plus(VIDEO_EXPIRATION_IN_MINUTES, ChronoUnit.MINUTES);
+    }
 }
