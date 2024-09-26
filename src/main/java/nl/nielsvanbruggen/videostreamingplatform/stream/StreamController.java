@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -28,7 +30,7 @@ public class StreamController {
     private final UserService userService;
 
     @GetMapping("/video/{id}")
-    public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestParam String token, @RequestHeader HttpHeaders headers) {
+    public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestParam UUID token, @RequestHeader HttpHeaders headers) {
         Video video = videoService.getVideo(id);
 
         VideoToken videoToken = videoTokenService.getVideoToken(token);
@@ -68,7 +70,7 @@ public class StreamController {
         token.resetExpiration();
 
         VideoTokenGetResponse response = VideoTokenGetResponse.builder()
-                .token(token.getToken())
+                .token(token.getToken().toString())
                 .build();
 
         return ResponseEntity.ok(response);

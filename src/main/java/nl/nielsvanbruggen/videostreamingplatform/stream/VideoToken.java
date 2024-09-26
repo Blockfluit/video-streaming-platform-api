@@ -5,27 +5,29 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "video_token")
+@Table(name = "video_token", uniqueConstraints={
+        @UniqueConstraint(columnNames = {"video_id", "user_id"})
+})
 public class VideoToken {
     private final static int VIDEO_EXPIRATION_IN_MINUTES = 60;
 
     @Id
     @GeneratedValue
-    private Long id;
-    private String token;
+    private UUID token;
     private Instant createdAt;
     @Builder.Default
     private Instant expiration = getNewExpiration();
@@ -39,7 +41,7 @@ public class VideoToken {
     private User user;
 
     public boolean isValid(Video video) {
-        return this.video.equals(video) && expiration.isBefore(Instant.now());
+        return this.video.equals(video) && Instant.now().isBefore(expiration);
     }
 
     public void resetExpiration() {

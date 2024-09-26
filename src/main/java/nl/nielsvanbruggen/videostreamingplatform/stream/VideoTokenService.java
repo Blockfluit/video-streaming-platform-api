@@ -16,7 +16,7 @@ import static java.lang.String.format;
 public class VideoTokenService {
     private final VideoTokenRepository videoTokenRepository;
 
-    public VideoToken getVideoToken(String token) {
+    public VideoToken getVideoToken(UUID token) {
         return videoTokenRepository.findByToken(token)
                 .orElseThrow(() -> new VideoTokenException(format("Token: (%s) does not exist!", token)));
     }
@@ -24,9 +24,8 @@ public class VideoTokenService {
     @Transactional
     public VideoToken getVideoToken(User user, Video video) {
         return videoTokenRepository.findByUserAndVideo(user, video)
-                .orElse(videoTokenRepository.save(
+                .orElseGet(() -> videoTokenRepository.save(
                         VideoToken.builder()
-                                .token(UUID.randomUUID().toString())
                                 .video(video)
                                 .createdAt(Instant.now())
                                 .user(user)
