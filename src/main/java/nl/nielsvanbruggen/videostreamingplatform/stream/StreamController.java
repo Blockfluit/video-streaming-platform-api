@@ -39,6 +39,7 @@ public class StreamController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
+        // If the token is valid, reset the expiration.
         videoToken.resetExpiration();
         return streamService.getVideo(video, headers);
     }
