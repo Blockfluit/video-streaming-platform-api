@@ -23,13 +23,16 @@ public class VideoTokenService {
 
     @Transactional
     public VideoToken getVideoToken(User user, Video video) {
-        return videoTokenRepository.findByUserAndVideo(user, video)
-                .orElseGet(() -> videoTokenRepository.save(
-                        VideoToken.builder()
-                                .video(video)
-                                .createdAt(Instant.now())
-                                .user(user)
-                                .build())
+        VideoToken videoToken = videoTokenRepository.findByUserAndVideo(user, video)
+                .orElseGet(() -> VideoToken.builder()
+                        .video(video)
+                        .createdAt(Instant.now())
+                        .user(user)
+                        .build()
                 );
+
+        videoToken.resetExpiration();
+
+        return videoTokenRepository.save(videoToken);
     }
 }
