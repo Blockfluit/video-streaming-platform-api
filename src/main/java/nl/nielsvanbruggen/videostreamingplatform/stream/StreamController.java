@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -28,15 +30,16 @@ public class StreamController {
     private final UserService userService;
 
     @GetMapping("/video/{id}")
-    public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestParam String token, @RequestHeader HttpHeaders headers) {
-        VideoToken videoToken = videoTokenService.getVideoToken(token);
+    public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestParam UUID token, @RequestHeader HttpHeaders headers) {
         Video video = videoService.getVideo(id);
 
-        if(video.equals(videoToken.getVideo()) && !videoTokenService.isTokenValid(videoToken)) {
-            throw new VideoTokenException("Video token is not valid.");
+        VideoToken videoToken = videoTokenService.getVideoToken(token);
+
+        if(!videoToken.isValid(video)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        videoTokenService.updateVideoToken(videoToken);
+        videoToken.resetExpiration();
         return streamService.getVideo(video, headers);
     }
 
@@ -62,12 +65,14 @@ public class StreamController {
     public ResponseEntity<VideoTokenGetResponse> getVideoToken(@PathVariable Long id, Authentication authentication) {
         Video video = videoService.getVideo(id);
         User user = userService.getUser(authentication.getName());
-        VideoToken token = videoTokenService.createVideoToken(user, video);
+        VideoToken token = videoTokenService.getVideoToken(user, video);
+
+        token.resetExpiration();
 
         VideoTokenGetResponse response = VideoTokenGetResponse.builder()
-                .token(token.getToken())
+                .token(token.getToken().toString())
                 .build();
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.ok(response);
     }
 }

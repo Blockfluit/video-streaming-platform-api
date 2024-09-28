@@ -62,7 +62,7 @@ public class StreamService {
             return createInitialResponse(path, tot);
         }
 
-        String[] rangeHeader = headers.getRange().get(0).toString().split("-");
+        String[] rangeHeader = headers.getRange().getFirst().toString().split("-");
         long start = Long.parseLong(rangeHeader[0]);
         long end = rangeHeader.length == 1 ?
                 // Handles case were only first number of range header is provided.

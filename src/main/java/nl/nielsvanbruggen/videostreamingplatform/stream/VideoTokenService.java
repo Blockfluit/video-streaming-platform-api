@@ -7,48 +7,29 @@ import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+
+import static java.lang.String.format;
 
 @Service
 @RequiredArgsConstructor
 public class VideoTokenService {
-    private final static int VIDEO_EXPIRATION_IN_MINUTES = 60;
     private final VideoTokenRepository videoTokenRepository;
 
-    public VideoToken getVideoToken(String token) {
+    public VideoToken getVideoToken(UUID token) {
         return videoTokenRepository.findByToken(token)
-                .orElseThrow(() -> new VideoTokenException("Video token does not exist."));
-    }
-
-    public boolean isTokenValid(VideoToken videoToken) {
-        return Instant.now()
-                .isBefore(videoToken.getExpiration().plus(VIDEO_EXPIRATION_IN_MINUTES, ChronoUnit.MINUTES));
-    }
-
-    public void updateVideoToken(VideoToken videoToken) {
-        videoToken.setExpiration(getExpiration());
-        videoTokenRepository.save(videoToken);
+                .orElseThrow(() -> new VideoTokenException(format("Token: (%s) does not exist!", token)));
     }
 
     @Transactional
-    public VideoToken createVideoToken(User user, Video video) {
-        videoTokenRepository.deleteAllByVideo(video);
-
-        VideoToken token = VideoToken.builder()
-                .token(UUID.randomUUID().toString())
-                .video(video)
-                .createdAt(Instant.now())
-                .expiration(getExpiration())
-                .user(user)
-                .build();
-
-        videoTokenRepository.save(token);
-
-        return token;
-    }
-
-    private Instant getExpiration() {
-        return Instant.now().plus(VIDEO_EXPIRATION_IN_MINUTES, ChronoUnit.MINUTES);
+    public VideoToken getVideoToken(User user, Video video) {
+        return videoTokenRepository.findByUserAndVideo(user, video)
+                .orElseGet(() -> videoTokenRepository.save(
+                        VideoToken.builder()
+                                .video(video)
+                                .createdAt(Instant.now())
+                                .user(user)
+                                .build())
+                );
     }
 }

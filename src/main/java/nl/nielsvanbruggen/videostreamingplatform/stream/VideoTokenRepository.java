@@ -6,10 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface VideoTokenRepository extends JpaRepository<VideoToken, Long> {
+public interface VideoTokenRepository extends JpaRepository<VideoToken, UUID> {
+    Optional<VideoToken> findByUserAndVideo(User user, Video video);
+    Optional<VideoToken> findByToken(UUID token);
     void deleteAllByUser(User user);
-    Optional<VideoToken> findByToken(String token);
     void deleteByVideoIn(List<Video> videos);
     void deleteAllByVideo(Video video);
 }
