@@ -20,21 +20,21 @@ public class InviteTokenService {
         return inviteTokenRepository.findAll();
     }
 
-    public void createInviteToken(User user, InviteTokenPostRequest inviteTokenPostRequest) {
-        if(inviteTokenPostRequest.getExpiration() == null ||
-                inviteTokenPostRequest.getExpiration().isBefore(Instant.now())) {
+    public void createInviteToken(InviteTokenPostRequest request, User user) {
+        if(request.getExpiration() == null ||
+                request.getExpiration().isBefore(Instant.now())) {
             throw new IllegalArgumentException();
         }
 
-        Role role = (inviteTokenPostRequest.getRole() == null ||
-                !Arrays.asList(Role.values()).contains(inviteTokenPostRequest.getRole())) ?
-                Role.USER: inviteTokenPostRequest.getRole();
+        Role role = (request.getRole() == null ||
+                !Arrays.asList(Role.values()).contains(request.getRole())) ?
+                Role.USER: request.getRole();
 
         InviteToken token = InviteToken.builder()
                 .token(UUID.randomUUID().toString())
-                .expiration(inviteTokenPostRequest.getExpiration())
+                .expiration(request.getExpiration())
                 .used(false)
-                .master(inviteTokenPostRequest.isMaster())
+                .master(request.isMaster())
                 .createdBy(user)
                 .role(role)
                 .createdAt(Instant.now())

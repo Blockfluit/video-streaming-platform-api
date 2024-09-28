@@ -1,6 +1,5 @@
 package nl.nielsvanbruggen.videostreamingplatform.service;
 
-import jakarta.xml.bind.DatatypeConverter;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
 import nl.nielsvanbruggen.videostreamingplatform.config.SnapshotProperties;
@@ -14,33 +13,26 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Base64;
 
 @Component
 @RequiredArgsConstructor
 public class ImageService {
-    private static final Pattern base64ImagePattern = Pattern.compile("data:image/(.+);base64");
+
 
     private final SnapshotProperties snapshotProperties;
     private final PathProperties pathProperties;
 
     public void saveImage(String base64Image, String imageName) throws IOException {
-        String[] parts = base64Image.split(",");
-        Matcher matcher = base64ImagePattern.matcher(parts[0]);
-
-        if(parts.length < 2 || !matcher.find()) throw new IOException("Base 64 image is not formatted correctly");
-
-        InputStream is = new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(parts[1]));
-
+        InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(base64Image));
         this.saveImage(is, imageName);
     }
 
-    public void saveImage(InputStream imageStream, String imageName) throws IOException {
+    public String saveImage(InputStream imageStream, String imageName) throws IOException {
         try {
             BufferedImage image = ImageIO.read(imageStream);
             BufferedImage resizedImage = cropImage(image);
-            writeImageAsJpg(resizedImage, imageName);
+            return writeImageAsJpg(resizedImage, imageName);
         } catch (IOException ex) {
             throw new IOException(ex.getMessage());
         }
@@ -66,13 +58,17 @@ public class ImageService {
         return convertedImage;
     }
 
-    private void writeImageAsJpg(BufferedImage bufferedImage, String name) throws IOException {
-        try(FileOutputStream fileOutputStream = new FileOutputStream(Path.of(pathProperties.getThumbnail().getRoot(), name).toFile())) {
+    private String writeImageAsJpg(BufferedImage bufferedImage, String name) throws IOException {
+        String imageName = name + ".jpg";
+
+        try(FileOutputStream fileOutputStream = new FileOutputStream(Path.of(pathProperties.getThumbnail().getRoot(), imageName).toFile())) {
             boolean canWrite = ImageIO.write(bufferedImage, "jpg", fileOutputStream);
 
             if (!canWrite) {
                 throw new IOException("Failed to write image.");
             }
         }
+
+        return imageName;
     }
 }

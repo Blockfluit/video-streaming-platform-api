@@ -1,11 +1,6 @@
 spring:
   profiles:
     active: ${ACTIVE_PROFILE:dev}
-  server:
-    port: 8080
-    tomcat:
-      max-http-form-post-size: ${MAX_HTTP_FORM_POST_SIZE:10MB}
-      max-swallow-size: ${MAX_SWALLOW_SIZE:10MB}
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
@@ -17,6 +12,13 @@ spring:
     multipart:
       max-file-size: ${MAX_FILE_SIZE:10MB}
       max-request-size: ${MAX_REQUEST_SIZE:10MB}
+
+server:
+  servlet:
+    context-path: /api/v1
+  tomcat:
+    max-http-form-post-size: ${MAX_HTTP_FORM_POST_SIZE:10MB}
+    max-swallow-size: ${MAX_SWALLOW_SIZE:10MB}
 
 secret-key: ${SECRET_KEY}
 
@@ -35,3 +37,6 @@ paths:
 snapshot:
   width: 600
   height: 900
+
+scraper:
+  url: ${SCRAPER_URL}

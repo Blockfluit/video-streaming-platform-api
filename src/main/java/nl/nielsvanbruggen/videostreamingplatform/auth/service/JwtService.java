@@ -25,7 +25,7 @@ public class JwtService {
     private String jwtSecret;
     private static final int EXPIRATION_TIME_MILLIS = 1000 * 60 * 5;
 
-    public String extractUsername(String token) {
+    public String extractUsername(String token) throws InvalidJwtTokenException {
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -60,12 +60,12 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) throws InvalidJwtTokenException {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
+    private Claims extractAllClaims(String token) throws InvalidJwtTokenException {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())

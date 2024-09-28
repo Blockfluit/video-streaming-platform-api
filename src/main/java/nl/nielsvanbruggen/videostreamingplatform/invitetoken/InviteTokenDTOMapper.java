@@ -8,13 +8,16 @@ import java.util.function.Function;
 public class InviteTokenDTOMapper implements Function<InviteToken, InviteTokenDTO> {
     @Override
     public InviteTokenDTO apply(InviteToken inviteToken) {
-        return new InviteTokenDTO(
-                inviteToken.getToken(),
-                inviteToken.getExpiration(),
-                inviteToken.isUsed(),
-                inviteToken.isMaster(),
-                inviteToken.getCreatedAt(),
-                inviteToken.getRole(),
-                inviteToken.getCreatedBy().getUsername());
+        return InviteTokenDTO.builder()
+                .token(inviteToken.getToken())
+                .role(inviteToken.getRole())
+                .used(inviteToken.isUsed())
+                .master(inviteToken.isMaster())
+                .expiration(inviteToken.getExpiration())
+                .createdAt(inviteToken.getCreatedAt())
+                .createdBy(inviteToken.getCreatedBy() != null ?
+                        inviteToken.getCreatedBy().getUsername() :
+                        null)
+                .build();
     }
 }

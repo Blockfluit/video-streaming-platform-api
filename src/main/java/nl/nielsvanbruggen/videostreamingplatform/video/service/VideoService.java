@@ -25,8 +25,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,7 +36,6 @@ import static java.lang.String.format;
 @Service
 public class VideoService {
     private static final Pattern subtitlePattern = Pattern.compile("(.+)_([a-z]{2})_(\\p{Alnum}+)(.\\p{Alpha}+)");
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final VideoRepository videoRepository;
     private final SubtitleRepository subtitleRepository;
     private final PathProperties pathProperties;
@@ -125,7 +122,7 @@ public class VideoService {
             video.setSeason(season);
             videoRepository.save(video);
 
-            executorService.execute(() -> createSnapshot(video, videoPath));
+            createSnapshot(video, videoPath);
             persistSubtitles(video, videoPath, subtitles);
         }
     }

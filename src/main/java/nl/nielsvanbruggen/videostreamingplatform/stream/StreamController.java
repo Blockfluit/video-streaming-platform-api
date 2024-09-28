@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/stream")
+@RequestMapping("/stream")
 public class StreamController {
     private final VideoTokenService videoTokenService;
     private final StreamService streamService;

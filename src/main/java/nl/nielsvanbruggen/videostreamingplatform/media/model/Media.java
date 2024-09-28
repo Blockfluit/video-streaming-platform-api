@@ -2,12 +2,11 @@ package nl.nielsvanbruggen.videostreamingplatform.media.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
-import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
-import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @Builder
@@ -19,7 +18,14 @@ public class Media {
     @GeneratedValue
     @EqualsAndHashCode.Include
     private long id;
+    private String imdbId;
+    private Double imdbRating;
+    private Long imdbRatingsAmount;
     private String name;
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
     @Column(name = "created_at")
     private Instant createdAt;
     @Column(name = "updated_at")
@@ -32,14 +38,4 @@ public class Media {
     @Enumerated(EnumType.STRING)
     private Type type;
     private boolean hidden;
-    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
-    private List<Video> videos;
-    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
-    private List<MediaGenre> genres;
-    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
-    private List<MediaActor> actors;
-    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
-    private List<Review> reviews;
-    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
-    private List<Rating> ratings;
 }
