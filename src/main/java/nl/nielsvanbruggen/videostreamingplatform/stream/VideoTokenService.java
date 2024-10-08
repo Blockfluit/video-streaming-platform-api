@@ -16,23 +16,29 @@ import static java.lang.String.format;
 public class VideoTokenService {
     private final VideoTokenRepository videoTokenRepository;
 
+    public void saveToken(VideoToken videoToken) {
+        videoTokenRepository.save(videoToken);
+    }
+
     public VideoToken getVideoToken(UUID token) {
         return videoTokenRepository.findByToken(token)
                 .orElseThrow(() -> new VideoTokenException(format("Token: (%s) does not exist!", token)));
     }
 
+    /**
+     * @return The videoToken that is already associated with the User and Video.
+     * If it does not exist it will create a new one.
+     * */
     @Transactional
     public VideoToken getVideoToken(User user, Video video) {
-        VideoToken videoToken = videoTokenRepository.findByUserAndVideo(user, video)
-                .orElseGet(() -> VideoToken.builder()
-                        .video(video)
-                        .createdAt(Instant.now())
-                        .user(user)
-                        .build()
+        return videoTokenRepository.findByUserAndVideo(user, video)
+                .orElseGet(() -> videoTokenRepository.save(
+                        VideoToken.builder()
+                                .video(video)
+                                .createdAt(Instant.now())
+                                .user(user)
+                                .build()
+                        )
                 );
-
-        videoToken.resetExpiration();
-
-        return videoTokenRepository.save(videoToken);
     }
 }

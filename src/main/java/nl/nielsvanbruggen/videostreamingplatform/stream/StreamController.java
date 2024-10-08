@@ -39,8 +39,10 @@ public class StreamController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        // If the token is valid, reset the expiration.
+        // Reset the expiration and persist it.
         videoToken.resetExpiration();
+        videoTokenService.saveToken(videoToken);
+
         return streamService.getVideo(video, headers);
     }
 
@@ -66,12 +68,14 @@ public class StreamController {
     public ResponseEntity<VideoTokenGetResponse> getVideoToken(@PathVariable Long id, Authentication authentication) {
         Video video = videoService.getVideo(id);
         User user = userService.getUser(authentication.getName());
-        VideoToken token = videoTokenService.getVideoToken(user, video);
+        VideoToken videoToken = videoTokenService.getVideoToken(user, video);
 
-        token.resetExpiration();
+        // Reset the expiration and persist it.
+        videoToken.resetExpiration();
+        videoTokenService.saveToken(videoToken);
 
         VideoTokenGetResponse response = VideoTokenGetResponse.builder()
-                .token(token.getToken().toString())
+                .token(videoToken.getToken().toString())
                 .build();
 
         return ResponseEntity.ok(response);
