@@ -2,6 +2,7 @@ package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenreRepository;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRelationRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.ReviewRepository;
 import nl.nielsvanbruggen.videostreamingplatform.person.model.ContextRole;
@@ -27,10 +28,12 @@ public class MediaDTOMapper implements Function<Media, MediaDTO> {
     private final ReviewDTOMapper reviewDTOMapper;
     private final ReviewRepository reviewRepository;
     private final VideoDTOMapper videoDTOMapper;
+    private final MediaRelationDtoMapper mediaRelationDtoMapper;
     private final VideoRepository videoRepository;
     private final WatchedRepository watchedRepository;
     private final MediaGenreRepository mediaGenreRepository;
     private final MediaPersonRepository mediaPersonRepository;
+    private final MediaRelationRepository mediaRelationRepository;
 
     @Override
     public MediaDTO apply(Media media) {
@@ -43,15 +46,15 @@ public class MediaDTOMapper implements Function<Media, MediaDTO> {
                 .thumbnail(media.getThumbnail())
                 .trailer(media.getTrailer())
                 .plot(media.getPlot())
-                .type(media.getType())
+                .mediaType(media.getType())
                 .year(media.getYear())
                 .hidden(media.isHidden())
                 .updatedAt(media.getUpdatedAt())
                 .createdAt(media.getCreatedAt())
                 .genres(mediaGenreRepository.findAllByMedia(media).stream()
-                .map(MediaGenre::getGenre)
-                .map(Genre::getName)
-                .toList())
+                        .map(MediaGenre::getGenre)
+                        .map(Genre::getName)
+                        .toList())
                 .directors(mediaPersonRepository.findAllByMediaAndContextRole(media, ContextRole.DIRECTOR).stream()
                         .map(MediaPerson::getPerson)
                         .toList())
@@ -82,6 +85,9 @@ public class MediaDTOMapper implements Function<Media, MediaDTO> {
                         .mapToDouble(Rating::getScore)
                         .average()
                         .orElse(-1D))
+                .relations(mediaRelationRepository.findAllByMediaFrom(media).stream()
+                        .map(mediaRelationDtoMapper)
+                        .toList())
                 .build();
     }
 }

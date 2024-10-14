@@ -2,8 +2,8 @@ package nl.nielsvanbruggen.videostreamingplatform.media.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.MediaType;
 import nl.nielsvanbruggen.videostreamingplatform.person.model.Person;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
 import nl.nielsvanbruggen.videostreamingplatform.video.dto.VideoDTO;
 
 import java.time.Instant;
@@ -20,7 +20,7 @@ public class MediaDTO {
     private String thumbnail;
     private String trailer;
     private String plot;
-    private Type type;
+    private MediaType mediaType;
     private int year;
     private boolean hidden;
     private Instant updatedAt;
@@ -37,4 +37,5 @@ public class MediaDTO {
     private int views;
     private List<RatingDTO> ratings;
     private double avgRating;
+    private List<MediaRelationDto> relations;
 }

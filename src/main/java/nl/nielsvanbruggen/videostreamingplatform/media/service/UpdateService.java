@@ -68,7 +68,7 @@ public class UpdateService {
     public void updateDefault(Media media, MediaPatchRequest request) {
         if(request.getTrailer() != null) media.setTrailer(request.getTrailer());
         if(request.getPlot() != null) media.setPlot(request.getPlot());
-        if(request.getType() != null) media.setType(request.getType());
+        if(request.getMediaType() != null) media.setType(request.getMediaType());
         if(request.getYear() != null) media.setYear(request.getYear());
         if(request.isUpdateTimestamp()) media.setUpdatedAt(Instant.now());
         if(request.getThumbnail() != null) uploadService.handleThumbnail(request.getThumbnail(), media.getName() + "_" + request.getYear());

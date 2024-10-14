@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import nl.nielsvanbruggen.videostreamingplatform.annotations.IsBase64Image;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.MediaType;
 
 import java.util.Set;
 
@@ -25,7 +25,7 @@ public class MediaPostRequest {
     private Set<Long> cast = Set.of();
     private Integer year;
     @NotNull(message = "Type missing.")
-    private Type type;
+    private MediaType mediaType;
     private String plot;
     private boolean hidden;
     private boolean scrapeImdb;

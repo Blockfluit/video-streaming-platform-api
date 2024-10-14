@@ -41,7 +41,7 @@ public class MediaDTOSimplifiedMapper implements Function<Media, MediaDTO> {
                 .thumbnail(media.getThumbnail())
                 .trailer(media.getTrailer())
                 .plot(media.getPlot())
-                .type(media.getType())
+                .mediaType(media.getType())
                 .year(media.getYear())
                 .hidden(media.isHidden())
                 .updatedAt(media.getUpdatedAt())

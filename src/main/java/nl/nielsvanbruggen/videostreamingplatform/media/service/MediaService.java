@@ -11,6 +11,7 @@ import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOSimplifiedMap
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Rating;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Review;
+import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRelationRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.MediaRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.RatingRepository;
 import nl.nielsvanbruggen.videostreamingplatform.media.repository.ReviewRepository;
@@ -39,6 +40,7 @@ public class MediaService {
     private final RatingRepository ratingRepository;
     private final ReviewRepository reviewRepository;
     private final WatchedRepository watchedRepository;
+    private final MediaRelationRepository mediaRelationRepository;
     private final MediaDTOSimplifiedMapper mediaDTOSimplifiedMapper;
     private final UserService userService;
     private final UploadService uploadService;

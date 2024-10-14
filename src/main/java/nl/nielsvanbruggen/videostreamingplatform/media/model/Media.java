@@ -1,5 +1,6 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.*;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
@@ -13,6 +14,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Media {
     @Id
     @GeneratedValue
@@ -36,6 +38,6 @@ public class Media {
     private String plot;
     private int year;
     @Enumerated(EnumType.STRING)
-    private Type type;
+    private MediaType type;
     private boolean hidden;
 }
