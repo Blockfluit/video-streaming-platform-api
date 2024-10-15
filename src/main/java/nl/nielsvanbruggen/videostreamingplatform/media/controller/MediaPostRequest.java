@@ -25,7 +25,7 @@ public class MediaPostRequest {
     private Set<Long> cast = Set.of();
     private Integer year;
     @NotNull(message = "Type missing.")
-    private MediaType mediaType;
+    private MediaType type;
     private String plot;
     private boolean hidden;
     private boolean scrapeImdb;

@@ -24,7 +24,7 @@ public class MediaPatchRequest {
     private Set<Long> stars = new HashSet<>();
     private Set<Long> cast = new HashSet<>();
     private Integer year;
-    private MediaType mediaType;
+    private MediaType type;
     private String plot;
     private List<IdIndex> order;
     private boolean updateFiles;
