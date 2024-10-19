@@ -3,7 +3,7 @@ package nl.nielsvanbruggen.videostreamingplatform.media.controller;
 import lombok.Data;
 import nl.nielsvanbruggen.videostreamingplatform.annotations.IsBase64Image;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.IdIndex;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Type;
+import nl.nielsvanbruggen.videostreamingplatform.media.model.MediaType;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -24,7 +24,7 @@ public class MediaPatchRequest {
     private Set<Long> stars = new HashSet<>();
     private Set<Long> cast = new HashSet<>();
     private Integer year;
-    private Type type;
+    private MediaType type;
     private String plot;
     private List<IdIndex> order;
     private boolean updateFiles;

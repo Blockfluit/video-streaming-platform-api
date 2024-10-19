@@ -41,6 +41,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/auth/refresh-token/**").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/auth/refresh-token/**").hasAuthority(Role.ADMIN.name())
                         .requestMatchers("/invite-tokens").hasAuthority(Role.ADMIN.name())
+                        .requestMatchers("/media-relation").hasAuthority(Role.ADMIN.name())
                         .requestMatchers("/stream/video-token").authenticated()
                         .requestMatchers("/stream/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
