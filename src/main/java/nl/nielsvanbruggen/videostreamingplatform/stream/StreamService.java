@@ -3,19 +3,16 @@ package nl.nielsvanbruggen.videostreamingplatform.stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
-import nl.nielsvanbruggen.videostreamingplatform.utils.MimeTypeUtil;
-import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
-import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRange;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 @Slf4j
@@ -23,107 +20,58 @@ import java.nio.file.Path;
 @RequiredArgsConstructor
 public class StreamService {
     private final static int MAX_CHUNK_SIZE_BYTES = 1024 * 1024;
+
     private final PathProperties pathProperties;
 
-    public ResponseEntity<?> getVideo(Video video, HttpHeaders headers) {
-        Path absolutePath = Path.of(pathProperties.getVideos().getRoot(), video.getPath());
+    public ResponseEntity<?> createVideoResponse(Video video, HttpHeaders headers) {
+        Path path = Path.of(pathProperties.getVideos().getRoot(), video.getPath());
 
-        long tot = totalBytes(absolutePath);
-        return createStreamResponseEntity(absolutePath, headers, tot);
-    }
+        try (FileChannel fileChannel = FileChannel.open(path)) {
+            long totalSize = fileChannel.size();
 
-    public ResponseEntity<byte[]> getSubtitle(Subtitle subtitle) {
-        Path absolutePath = Path.of(pathProperties.getVideos().getRoot(), subtitle.getPath());
+            if (headers.getRange().isEmpty()) {
+                return createInitialResponse(totalSize);
+            }
 
-        long tot = totalBytes(absolutePath);
-        byte[] bytes = readBytes(absolutePath, 0, tot);
-        return createFullResponseEntity(absolutePath, bytes, tot);
-    }
+            HttpRange range = HttpRange.parseRanges(headers.getFirst(HttpHeaders.RANGE)).getFirst();
+            long start = range.getRangeStart(totalSize);
+            long end = range.getRangeEnd(totalSize);
 
-    public ResponseEntity<byte[]> getThumbnail(Media media) {
-        Path absolutePath = Path.of(pathProperties.getThumbnail().getRoot(), media.getThumbnail());
+            // Fallback logic if no end is provided.
+            if (end == -1 || end >= totalSize - 1) {
+                end = Math.min(start + MAX_CHUNK_SIZE_BYTES - 1, totalSize - 1);
+            }
 
-        long tot = totalBytes(absolutePath);
-        byte[] bytes = readBytes(absolutePath, 0, tot);
-        return createFullResponseEntity(absolutePath, bytes, tot);
-    }
+            int length = (int) (end - start + 1);
+            end = Math.min(end, totalSize - 1);
 
-    public ResponseEntity<byte[]> getSnapshot(Video video) {
-        Path absolutePath = Path.of(pathProperties.getSnapshot().getRoot(), video.getSnapshot());
+            ByteBuffer buffer = ByteBuffer.allocate(length);
+            fileChannel.position(start);
+            fileChannel.read(buffer);
+            buffer.flip();
 
-        long tot = totalBytes(absolutePath);
-        byte[] bytes = readBytes(absolutePath, 0, tot);
-        return createFullResponseEntity(absolutePath, bytes, tot);
-    }
-
-    private ResponseEntity<?> createStreamResponseEntity(Path path, HttpHeaders headers, long tot) {
-        // Handles case were no range header is provided.
-        if (headers.getRange().isEmpty()) {
-            return createInitialResponse(path, tot);
-        }
-
-        String[] rangeHeader = headers.getRange().getFirst().toString().split("-");
-        long start = Long.parseLong(rangeHeader[0]);
-        long end = rangeHeader.length == 1 ?
-                // Handles case were only first number of range header is provided.
-                // This is the standard for most browsers.
-                Math.min((start + MAX_CHUNK_SIZE_BYTES), tot - 1) :
-                // Handles case were both numbers of range header is provided.
-                // As far as I know, only Apple does this.
-                Long.parseLong(rangeHeader[1]);
-
-        byte[] bytes = readBytes(path, start, end);
-        return createPartialResponse(path, bytes, start, end, tot);
-    }
-
-    private ResponseEntity<byte[]> createFullResponseEntity(Path path, byte[] bytes, long tot) {
-        MultiValueMap<String, String> responseHeaders = new HttpHeaders();
-        responseHeaders.add("Accept-Ranges", "bytes");
-        responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
-        responseHeaders.add("Content-Length", Long.toString(tot));
-        responseHeaders.add("Cache-Control", "no-cache");
-
-        return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.OK);
-    }
-
-    private ResponseEntity<Void> createInitialResponse(Path path, long tot) {
-        MultiValueMap<String, String> responseHeaders = new HttpHeaders();
-        responseHeaders.add("Accept-Ranges", "bytes");
-        responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
-        responseHeaders.add("Content-Length", Long.toString(tot));
-        responseHeaders.add("Cache-Control", "no-cache");
-
-        return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
-    }
-
-    private ResponseEntity<byte[]> createPartialResponse(Path path, byte[] bytes, long start, long end, long tot) {
-        MultiValueMap<String, String> responseHeaders = new HttpHeaders();
-        responseHeaders.add("Content-Range", String.format("bytes %1$d-%2$d/%3$d", start, end, tot));
-        responseHeaders.add("Accept-Ranges", "bytes");
-        responseHeaders.add("Content-Type", MimeTypeUtil.getMimeType(path));
-        responseHeaders.add("Content-Length", String.valueOf(bytes.length));
-        responseHeaders.add("Cache-Control", "no-cache");
-
-        return new ResponseEntity<>(bytes, responseHeaders, HttpStatus.PARTIAL_CONTENT);
-    }
-
-    private byte[] readBytes(Path path, long start, long end) {
-       try(InputStream is = Files.newInputStream(path)) {
-            is.skip(start);
-            // + 1 because start and end are inclusive.
-            // For example bytes 0-1/100 should return byte[0] and byte[1]
-            return is.readNBytes((int) (end - start + 1));
+            return createPartialResponse(buffer.array(), start, end, totalSize);
         } catch (IOException e) {
-            log.warn(String.format("Could not read %d to %d bytes: %s", start, end, e.getMessage()));
-            return new byte[0];
+            log.error(e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         }
     }
-    private long totalBytes(Path path) {
-        try {
-            return Files.size(path);
-        } catch (IOException e) {
-            log.warn("Could not read total amount of bytes: " + e.getMessage());
-            return -1;
-        }
+
+    private ResponseEntity<Void> createInitialResponse(long tot) {
+        return ResponseEntity.ok()
+                .contentLength(tot)
+                .header("Accept-Ranges", "bytes")
+                .header("Content-Type", "video/mp4")
+                .build();
+    }
+
+    private ResponseEntity<byte[]> createPartialResponse(byte[] bytes, long start, long end, long tot) {
+        return ResponseEntity
+                .status(HttpStatus.PARTIAL_CONTENT)
+                .contentLength(bytes.length)
+                .header("Content-Range", String.format("bytes %d-%d/%d", start, end, tot))
+                .header("Accept-Ranges", "bytes")
+                .header("Content-Type", "video/mp4")
+                .body(bytes);
     }
 }

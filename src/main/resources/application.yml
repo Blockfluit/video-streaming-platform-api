@@ -26,15 +26,15 @@ jwt:
 
 paths:
   videos:
-    root: ${PATH_VIDEOS_ROOT:./videos}
+    root: ${PATH_VIDEOS_ROOT}
   thumbnail:
-    root: ${PATH_THUMBNAIL_ROOT:./thumbnails}
+    root: ${PATH_THUMBNAIL_ROOT}
   snapshot:
-    root: ${PATH_SNAPSHOT_ROOT:./snapshots}
+    root: ${PATH_SNAPSHOT_ROOT}
   ffmpeg:
-    root: ${FFPROBE_PATH:/usr/bin/ffmpeg}
+    root: ${FFMPEG_PATH:/usr/bin/ffmpeg}
   ffprobe:
-    root: ${FFMPEG_PATH:/usr/bin/ffprobe}
+    root: ${FFPROBE_PATH:/usr/bin/ffprobe}
 
 snapshot:
   width: 600
