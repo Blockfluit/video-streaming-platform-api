@@ -20,9 +20,12 @@ server:
     max-http-form-post-size: ${MAX_HTTP_FORM_POST_SIZE:10MB}
     max-swallow-size: ${MAX_SWALLOW_SIZE:10MB}
 
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:PT5M}
+settings:
+  stream:
+    maxChunkSizeKB: ${STREAM_MAX_CHUNK_SIZE_KB}
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:PT5M}
 
 paths:
   videos:

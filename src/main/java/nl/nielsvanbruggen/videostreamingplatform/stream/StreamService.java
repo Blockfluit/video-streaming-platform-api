@@ -1,8 +1,8 @@
 package nl.nielsvanbruggen.videostreamingplatform.stream;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.config.PathProperties;
+import nl.nielsvanbruggen.videostreamingplatform.config.SettingsProperties;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRange;
@@ -17,14 +17,17 @@ import java.nio.file.Path;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StreamService {
-    private final static int MAX_CHUNK_SIZE_BYTES = 1024 * 1024;
+    private final String videoRootPath;
+    private final long maxChunkSizeBytes;
 
-    private final PathProperties pathProperties;
+    public StreamService(PathProperties pathProperties, SettingsProperties settingsProperties) {
+        this.videoRootPath = pathProperties.getVideos().getRoot();
+        this.maxChunkSizeBytes = settingsProperties.getStream().getMaxChunkSizeKB() * 1024;
+    }
 
     public ResponseEntity<?> createVideoResponse(Video video, HttpHeaders headers) {
-        Path path = Path.of(pathProperties.getVideos().getRoot(), video.getPath());
+        Path path = Path.of(videoRootPath, video.getPath());
 
         try (FileChannel fileChannel = FileChannel.open(path)) {
             long totalSize = fileChannel.size();
@@ -39,7 +42,7 @@ public class StreamService {
 
             // Fallback logic if no end is provided.
             if (end == -1 || end >= totalSize - 1) {
-                end = Math.min(start + MAX_CHUNK_SIZE_BYTES - 1, totalSize - 1);
+                end = Math.min(start + maxChunkSizeBytes - 1, totalSize - 1);
             }
 
             int length = (int) (end - start + 1);
