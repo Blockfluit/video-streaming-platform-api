@@ -17,6 +17,12 @@ import java.nio.file.Path;
 public class FileService {
     private final PathProperties pathProperties;
 
+    public Resource getVideo(Video video) throws MalformedURLException {
+        Path path = Path.of(pathProperties.getVideos().getRoot(), video.getPath());
+
+        return new UrlResource(path.toUri());
+    }
+
     public Resource getSubtitle(Subtitle subtitle) throws MalformedURLException {
         Path path = Path.of(pathProperties.getVideos().getRoot(), subtitle.getPath());
 

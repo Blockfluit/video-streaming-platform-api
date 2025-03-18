@@ -10,13 +10,7 @@ import java.time.Duration;
 @Component
 @ConfigurationProperties(prefix = "settings")
 public class SettingsProperties {
-    private Stream stream;
     private JWT jwt;
-
-    @Data
-    public static class Stream {
-        private long maxChunkSizeKB;
-    }
 
     @Data
     public static class JWT {

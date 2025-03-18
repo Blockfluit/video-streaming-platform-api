@@ -12,7 +12,6 @@ import nl.nielsvanbruggen.videostreamingplatform.video.service.SubtitleService;
 import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,7 +28,6 @@ import java.util.UUID;
 public class StreamController {
     private final VideoTokenService videoTokenService;
     private final FileService fileService;
-    private final StreamService streamService;
     private final MediaService mediaService;
     private final SubtitleService subtitleService;
     private final VideoService videoService;
@@ -38,20 +36,18 @@ public class StreamController {
     @GetMapping("/video/{id}")
     public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestParam UUID token, @RequestHeader HttpHeaders headers) {
         Video video = videoService.getVideo(id);
+        Resource resource;
 
-        VideoToken videoToken = videoTokenService.getVideoToken(token);
-
-        if(!videoToken.isValid(video)) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .build();
+        try {
+            resource = fileService.getVideo(video);
+        } catch (MalformedURLException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         }
 
-        // Reset the expiration and persist it.
-        videoToken.resetExpiration();
-        videoTokenService.saveToken(videoToken);
-
-        return streamService.createVideoResponse(video, headers);
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf("video/mp4"))
+                .body(resource);
     }
 
     @GetMapping("/subtitle/{id}")
