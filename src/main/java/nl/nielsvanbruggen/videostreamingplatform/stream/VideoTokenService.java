@@ -2,53 +2,43 @@ package nl.nielsvanbruggen.videostreamingplatform.stream;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.global.util.TokenGeneratorUtil;
-import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+
+import static java.lang.String.format;
 
 @Service
 @RequiredArgsConstructor
 public class VideoTokenService {
-    private final static int VIDEO_EXPIRATION_IN_MINUTES = 60;
     private final VideoTokenRepository videoTokenRepository;
 
-    public VideoToken getVideoToken(String token) {
-        return videoTokenRepository.findByToken(token)
-                .orElseThrow(() -> new VideoTokenException("Video token does not exist."));
-    }
-
-    public boolean isTokenValid(VideoToken videoToken) {
-        return Instant.now()
-                .isBefore(videoToken.getExpiration().plus(VIDEO_EXPIRATION_IN_MINUTES, ChronoUnit.MINUTES));
-    }
-
-    public void updateVideoToken(VideoToken videoToken) {
-        videoToken.setExpiration(getExpiration());
+    public void saveToken(VideoToken videoToken) {
         videoTokenRepository.save(videoToken);
     }
 
-    @Transactional
-    public VideoToken createVideoToken(User user, Video video) {
-        videoTokenRepository.deleteAllByUser(user);
-
-        VideoToken token = VideoToken.builder()
-                .token(TokenGeneratorUtil.generate(128))
-                .video(video)
-                .createdAt(Instant.now())
-                .expiration(getExpiration())
-                .user(user)
-                .build();
-
-        videoTokenRepository.save(token);
-
-        return token;
+    public VideoToken getVideoToken(UUID token) {
+        return videoTokenRepository.findByToken(token)
+                .orElseThrow(() -> new VideoTokenException(format("Token: (%s) does not exist!", token)));
     }
 
-    private Instant getExpiration() {
-        return Instant.now().plus(VIDEO_EXPIRATION_IN_MINUTES, ChronoUnit.MINUTES);
+    /**
+     * @return The videoToken that is already associated with the User and Video.
+     * If it does not exist it will create a new one.
+     * */
+    @Transactional
+    public VideoToken getVideoToken(User user, Video video) {
+        return videoTokenRepository.findByUserAndVideo(user, video)
+                .orElseGet(() -> videoTokenRepository.save(
+                        VideoToken.builder()
+                                .video(video)
+                                .createdAt(Instant.now())
+                                .user(user)
+                                .build()
+                        )
+                );
     }
 }

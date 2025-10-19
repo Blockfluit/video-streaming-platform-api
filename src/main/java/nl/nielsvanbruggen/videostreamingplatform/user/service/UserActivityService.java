@@ -1,7 +1,9 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.dto.UserActivityCountByHourMapper;
+import nl.nielsvanbruggen.videostreamingplatform.user.exception.UserNotFoundException;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.UserActivity;
 import nl.nielsvanbruggen.videostreamingplatform.user.dto.UserActivityCountByHourDTO;
@@ -27,15 +29,20 @@ public class UserActivityService {
     private final static Map<String, Instant> userActivity = new ConcurrentHashMap<>();
 
     @Scheduled(cron = "0 0/15 * 1/1 * *")
+    @Transactional
     public void persistUserActivity() {
         userActivity.forEach((userName, timestamp) -> {
             if(timestamp.isAfter(Instant.now().minus(15, ChronoUnit.MINUTES))) {
-                User user = userService.getUser(userName);
-                UserActivity userActivity = UserActivity.builder()
-                        .user(user)
-                        .createdAt(Instant.now())
-                        .build();
-                userActivityRepository.save(userActivity);
+                try {
+                    User user = userService.getUser(userName);
+                    UserActivity userActivity = UserActivity.builder()
+                            .user(user)
+                            .createdAt(Instant.now())
+                            .build();
+                    userActivityRepository.save(userActivity);
+                } catch (UserNotFoundException e) {
+                    userActivity.remove(userName);
+                }
             }
         });
     }

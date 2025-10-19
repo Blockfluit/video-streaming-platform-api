@@ -16,15 +16,17 @@ public class VideoDTOMapper implements Function<Video, VideoDTO> {
 
     @Override
     public VideoDTO apply(Video video) {
-        return new VideoDTO(
-                video.getId(),
-                video.getName(),
-                video.getDuration(),
-                video.getIndex(),
-                video.getSeason(),
-                subtitleRepository.findAllByVideo(video).stream()
+        return VideoDTO.builder()
+                .id(video.getId())
+                .name(video.getName())
+                .duration(video.getDuration())
+                .index(video.getIndex())
+                .season(video.getSeason())
+                .subtitles(subtitleRepository.findAllByVideo(video).stream()
                         .map(subtitleDTOMapper)
-                        .collect(Collectors.toList())
-        );
+                        .collect(Collectors.toList()))
+                .xResolution(video.getXResolution())
+                .yResolution(video.getYResolution())
+                .build();
     }
 }

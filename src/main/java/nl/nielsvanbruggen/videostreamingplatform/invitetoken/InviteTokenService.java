@@ -1,18 +1,15 @@
 package nl.nielsvanbruggen.videostreamingplatform.invitetoken;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
+import nl.nielsvanbruggen.videostreamingplatform.exception.InvalidTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
-import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
-import nl.nielsvanbruggen.videostreamingplatform.global.util.TokenGeneratorUtil;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,21 +20,21 @@ public class InviteTokenService {
         return inviteTokenRepository.findAll();
     }
 
-    public void createInviteToken(User user, InviteTokenPostRequest inviteTokenPostRequest) {
-        if(inviteTokenPostRequest.getExpiration() == null ||
-                inviteTokenPostRequest.getExpiration().isBefore(Instant.now())) {
+    public void createInviteToken(InviteTokenPostRequest request, User user) {
+        if(request.getExpiration() == null ||
+                request.getExpiration().isBefore(Instant.now())) {
             throw new IllegalArgumentException();
         }
 
-        Role role = (inviteTokenPostRequest.getRole() == null ||
-                !Arrays.asList(Role.values()).contains(inviteTokenPostRequest.getRole())) ?
-                Role.USER: inviteTokenPostRequest.getRole();
+        Role role = (request.getRole() == null ||
+                !Arrays.asList(Role.values()).contains(request.getRole())) ?
+                Role.USER: request.getRole();
 
         InviteToken token = InviteToken.builder()
-                .token(TokenGeneratorUtil.generate(254))
-                .expiration(inviteTokenPostRequest.getExpiration())
+                .token(UUID.randomUUID().toString())
+                .expiration(request.getExpiration())
                 .used(false)
-                .master(inviteTokenPostRequest.isMaster())
+                .master(request.isMaster())
                 .createdBy(user)
                 .role(role)
                 .createdAt(Instant.now())

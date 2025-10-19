@@ -2,10 +2,9 @@ package nl.nielsvanbruggen.videostreamingplatform.passwordreset;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
+import nl.nielsvanbruggen.videostreamingplatform.exception.InvalidTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
-import nl.nielsvanbruggen.videostreamingplatform.global.util.TokenGeneratorUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class PasswordResetService {
             passwordResetTokens.removeAll(tokens);
 
             PasswordResetToken resetToken = PasswordResetToken.builder()
-                    .token(TokenGeneratorUtil.generate(64))
+                    .token(UUID.randomUUID().toString())
                     .createdAt(Instant.now())
                     .expiration(Instant.now().plus(30, ChronoUnit.MINUTES))
                     .user(user.get())

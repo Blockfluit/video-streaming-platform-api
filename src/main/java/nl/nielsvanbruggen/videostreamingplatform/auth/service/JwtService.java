@@ -1,33 +1,36 @@
 package nl.nielsvanbruggen.videostreamingplatform.auth.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.auth.service.RefreshTokenService;
-import nl.nielsvanbruggen.videostreamingplatform.config.EnvironmentProperties;
-import org.springframework.beans.factory.annotation.Value;
+import nl.nielsvanbruggen.videostreamingplatform.config.SettingsProperties;
+import nl.nielsvanbruggen.videostreamingplatform.exception.InvalidJwtTokenException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
-    private static final int EXPIRATION_TIME_MILLIS = 1000 * 60 * 5;
-    private final EnvironmentProperties env;
+    private final Duration expiration;
+    private final String secret;
 
-    public String extractUsername(String token) {
+    public JwtService(SettingsProperties settingsProperties) {
+        this.expiration = settingsProperties.getJwt().getExpiration();
+        this.secret = settingsProperties.getJwt().getSecret();
+    }
+
+    public String extractUsername(String token) throws InvalidJwtTokenException {
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -44,7 +47,7 @@ public class JwtService {
                         .orElse("")))
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(Date.from(Instant.now()))
-                .setExpiration(Date.from(Instant.now().plus(EXPIRATION_TIME_MILLIS, ChronoUnit.MILLIS)))
+                .setExpiration(Date.from(Instant.now().plus(expiration)))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -62,21 +65,26 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) throws InvalidJwtTokenException {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+    private Claims extractAllClaims(String token) throws InvalidJwtTokenException {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (JwtException e) {
+            throw new InvalidJwtTokenException(e);
+        }
+
     }
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(env.getSecretKey());
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

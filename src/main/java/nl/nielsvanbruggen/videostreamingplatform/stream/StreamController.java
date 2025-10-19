@@ -1,71 +1,120 @@
 package nl.nielsvanbruggen.videostreamingplatform.stream;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Subtitle;
 import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
+import nl.nielsvanbruggen.videostreamingplatform.video.service.SubtitleService;
 import nl.nielsvanbruggen.videostreamingplatform.video.service.VideoService;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.MalformedURLException;
+import java.util.UUID;
 
+
+@Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/stream")
+@RequestMapping("/stream")
 public class StreamController {
     private final VideoTokenService videoTokenService;
-    private final StreamService streamService;
+    private final FileService fileService;
     private final MediaService mediaService;
+    private final SubtitleService subtitleService;
     private final VideoService videoService;
     private final UserService userService;
 
     @GetMapping("/video/{id}")
-    public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestParam String token, @RequestHeader HttpHeaders headers) {
-        VideoToken videoToken = videoTokenService.getVideoToken(token);
+    public ResponseEntity<?> getVideo(@PathVariable Long id, @RequestParam UUID token, @RequestHeader HttpHeaders headers) {
         Video video = videoService.getVideo(id);
+        Resource resource;
 
-        if(video.equals(videoToken.getVideo()) && !videoTokenService.isTokenValid(videoToken)) {
-            throw new VideoTokenException("Video token is not valid.");
+        try {
+            resource = fileService.getVideo(video);
+        } catch (MalformedURLException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         }
 
-        videoTokenService.updateVideoToken(videoToken);
-        return streamService.getVideo(video, headers);
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf("video/mp4"))
+                .body(resource);
     }
 
     @GetMapping("/subtitle/{id}")
-    public ResponseEntity<byte[]> getSubtitle(@PathVariable Long id) {
-        Subtitle subtitle = videoService.getSubtitle(id);
-        return streamService.getSubtitle(subtitle);
+    public ResponseEntity<Resource> getSubtitle(@PathVariable Long id) {
+        Subtitle subtitle = subtitleService.getSubtitle(id);
+        Resource resource;
+
+        try {
+            resource = fileService.getSubtitle(subtitle);
+        } catch (MalformedURLException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf("text/vtt"))
+                .body(resource);
     }
 
     @GetMapping("/thumbnail/{id}")
-    public ResponseEntity<byte[]> getThumbnail(@PathVariable Long id) {
+    public ResponseEntity<Resource> getThumbnail(@PathVariable Long id) {
         Media media = mediaService.getMedia(id);
-        return streamService.getThumbnail(media);
+        Resource resource;
+
+        try {
+            resource = fileService.getThumbnail(media);
+        } catch (MalformedURLException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(resource);
     }
 
     @GetMapping("/snapshot/{id}")
-    public ResponseEntity<byte[]> getSnapshot(@PathVariable Long id) {
+    public ResponseEntity<Resource> getSnapshot(@PathVariable Long id) {
         Video video = videoService.getVideo(id);
-        return streamService.getSnapshot(video);
+        Resource resource;
+
+        try {
+            resource = fileService.getSnapshot(video);
+        } catch (MalformedURLException e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(resource);
     }
 
     @GetMapping("/video-token/{id}")
     public ResponseEntity<VideoTokenGetResponse> getVideoToken(@PathVariable Long id, Authentication authentication) {
         Video video = videoService.getVideo(id);
         User user = userService.getUser(authentication.getName());
-        VideoToken token = videoTokenService.createVideoToken(user, video);
+        VideoToken videoToken = videoTokenService.getVideoToken(user, video);
+
+        // Reset the expiration and persist it.
+        videoToken.resetExpiration();
+        videoTokenService.saveToken(videoToken);
 
         VideoTokenGetResponse response = VideoTokenGetResponse.builder()
-                .token(token.getToken())
+                .token(videoToken.getToken().toString())
                 .build();
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.ok(response);
     }
 }

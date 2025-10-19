@@ -1,0 +1,45 @@
+spring:
+  profiles:
+    active: ${ACTIVE_PROFILE:dev}
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
+
+server:
+  servlet:
+    context-path: /api/v1
+  tomcat:
+    max-http-form-post-size: ${MAX_HTTP_FORM_POST_SIZE:10MB}
+    max-swallow-size: ${MAX_SWALLOW_SIZE:10MB}
+
+settings:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:PT5M}
+
+paths:
+  videos:
+    root: ${PATH_VIDEOS_ROOT}
+  thumbnail:
+    root: ${PATH_THUMBNAIL_ROOT}
+  snapshot:
+    root: ${PATH_SNAPSHOT_ROOT}
+  ffmpeg:
+    root: ${FFMPEG_PATH:/usr/bin/ffmpeg}
+  ffprobe:
+    root: ${FFPROBE_PATH:/usr/bin/ffprobe}
+
+snapshot:
+  width: 600
+  height: 900
+
+scraper:
+  url: ${SCRAPER_URL}

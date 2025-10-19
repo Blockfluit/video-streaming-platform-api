@@ -1,29 +1,34 @@
 package nl.nielsvanbruggen.videostreamingplatform.media.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.actor.model.MediaActor;
-import nl.nielsvanbruggen.videostreamingplatform.genre.MediaGenre;
-import nl.nielsvanbruggen.videostreamingplatform.video.model.Video;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
+import lombok.*;
+import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Table(name = "media")
 public class Media {
     @Id
     @GeneratedValue
+    @EqualsAndHashCode.Include
     private long id;
+    private String imdbId;
+    private Double imdbRating;
+    private Long imdbRatingsAmount;
     private String name;
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
     @Column(name = "created_at")
     private Instant createdAt;
     @Column(name = "updated_at")
@@ -34,22 +39,6 @@ public class Media {
     private String plot;
     private int year;
     @Enumerated(EnumType.STRING)
-    private Type type;
-    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
-    private List<Video> videos;
-    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
-    private List<MediaGenre> genres;
-    @OneToMany(mappedBy = "media", fetch = FetchType.EAGER)
-    private List<MediaActor> actors;
-    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
-    private List<Review> reviews;
-    @OneToMany(mappedBy = "media", fetch = FetchType.LAZY)
-    private List<Rating> ratings;
-
-    @Override
-    public boolean equals(Object object) {
-        if(object == null) return false;
-        if(!(object instanceof Media media)) return false;
-        return media.getId() == this.getId();
-    }
+    private MediaType type;
+    private boolean hidden;
 }

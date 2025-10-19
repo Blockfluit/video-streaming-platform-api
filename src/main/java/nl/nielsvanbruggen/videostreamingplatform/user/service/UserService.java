@@ -1,6 +1,5 @@
 package nl.nielsvanbruggen.videostreamingplatform.user.service;
 
-import com.sun.jdi.InternalException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.controller.UserDeleteRequest;
@@ -13,11 +12,9 @@ import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
 import nl.nielsvanbruggen.videostreamingplatform.user.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,12 +25,19 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserDTOMapper userDTOMapper;
 
-    public User getUser(Long id) {
+    public User getUser(Authentication authentication) throws UserNotFoundException {
+        String username = authentication.getName();
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User with name: " + username + " does not exist."));
+    }
+
+    public User getUser(Long id) throws UserNotFoundException {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User with id: " + id + " does not exist."));
     }
 
-    public User getUser(String username) {
+    public User getUser(String username) throws UserNotFoundException {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User with name: " + username + " does not exist."));
     }
@@ -42,6 +46,10 @@ public class UserService {
         return userRepository.findAll().stream()
                 .map(userDTOMapper)
                 .collect(Collectors.toList());
+    }
+
+    public boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().contains(new SimpleGrantedAuthority(Role.ADMIN.toString()));
     }
 
     public void patchUser(UserPatchRequest request, Authentication authentication) {

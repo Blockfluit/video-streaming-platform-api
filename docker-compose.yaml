@@ -1,0 +1,59 @@
+services:
+  api:
+    image: video-streaming-platform-api:latest
+    container_name: streaming-platform-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.streaming-platform-api.rule=Host(`api-tv.hs.nielsb.nl`)"
+      - "traefik.http.routers.streaming-platform-api.entrypoints=websecure"
+      - "traefik.http.routers.streaming-platform-api.tls=true"
+      - "traefik.http.routers.streaming-platform-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.streaming-platform-api.loadbalancer.server.port=8080"
+    volumes:
+      - /mnt/hdd0/videos:/videos/videos1
+      - /mnt/hdd0/videos:/videos/videos2
+      - /mnt/hdd1/videos:/videos/videos3
+      - /srv/docker/streaming-platform/api/thumbnails:/thumbnails
+      - /srv/docker/streaming-platform/api/snapshots:/snapshots
+    depends_on:
+      - db
+    restart: unless-stopped
+    env_file: ./stack.env
+    networks:
+      - traefik
+      - internal
+
+  db:
+    image: postgres:latest
+    container_name: streaming-platform-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - /srv/docker/streaming-platform/db:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - internal
+
+  adminer:
+    image: adminer:latest
+    container_name: streaming-platform-adminer
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.streaming-platform-adminer.rule=PathPrefix(`/streaming-platform-adminer`)"
+      - "traefik.http.middlewares.streaming-platform-adminer-stripprefix.stripprefix.prefixes=/streaming-platform-adminer"
+      - "traefik.http.routers.streaming-platform-adminer.middlewares=streaming-platform-adminer-stripprefix"
+      - "traefik.http.routers.streaming-platform-api.entrypoints=web"
+      - "traefik.http.services.streaming-platform-api.loadbalancer.server.port=8080"
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - internal
+
+networks:
+  traefik:
+    external: true
+  internal:

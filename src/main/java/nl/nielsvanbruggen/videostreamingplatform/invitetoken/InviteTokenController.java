@@ -3,60 +3,47 @@ package nl.nielsvanbruggen.videostreamingplatform.invitetoken;
 import com.sun.jdi.InternalException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.ErrorInfo;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.GlobalExceptionHandler;
-import nl.nielsvanbruggen.videostreamingplatform.global.exception.InvalidTokenException;
-import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import nl.nielsvanbruggen.videostreamingplatform.exception.ErrorInfo;
+import nl.nielsvanbruggen.videostreamingplatform.exception.InvalidTokenException;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/invite-tokens")
+@RequestMapping("/invite-tokens")
 public class InviteTokenController {
     private final InviteTokenService inviteTokenService;
     private final InviteTokenDTOMapper inviteTokenDTOMapper;
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<AllInviteTokensGetResponse> getAllInviteTokens() {
-        AllInviteTokensGetResponse response = AllInviteTokensGetResponse.builder()
-                .allInviteTokens(inviteTokenService.getAllInviteTokens().stream()
+    public ResponseEntity<Map<String, List<InviteTokenDTO>>> getAllInviteTokens() {
+        var inviteTokens = inviteTokenService.getAllInviteTokens().stream()
                         .map(inviteTokenDTOMapper)
-                        .toList())
-                .build();
+                        .toList();
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.ok(Map.of("inviteTokens", inviteTokens));
     }
 
     @PostMapping
     public ResponseEntity<Void> createInviteToken(@RequestBody InviteTokenPostRequest inviteTokenPostRequest, Authentication authentication) {
-        User user = userService.getUser(authentication.getName());
-        inviteTokenService.createInviteToken(user, inviteTokenPostRequest);
-        return new ResponseEntity<>(HttpStatus.OK);
+        inviteTokenService.createInviteToken(inviteTokenPostRequest, userService.getUser(authentication));
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{token}")
     public ResponseEntity<Void> deleteInviteToken(@PathVariable String token) {
         inviteTokenService.deleteInviteToken(token);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler(InternalException.class)
     public ResponseEntity<ErrorInfo> handleInvalidTokenException(HttpServletRequest req, InvalidTokenException invalidTokenException) {
-        ErrorInfo info = ErrorInfo.builder()
-                .url(req.getRequestURL().toString())
-                .timestamp(Instant.now())
-                .message(invalidTokenException.getMessage())
-                .build();
-
-        return new ResponseEntity<>(info, HttpStatus.NOT_FOUND);
+        return ResponseEntity.notFound().build();
     }
 }

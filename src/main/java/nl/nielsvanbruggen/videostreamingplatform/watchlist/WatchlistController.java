@@ -1,7 +1,6 @@
 package nl.nielsvanbruggen.videostreamingplatform.watchlist;
 
 import lombok.RequiredArgsConstructor;
-import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
 import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
@@ -13,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("api/v1/watchlist")
+@RequestMapping("/watchlist")
 public class WatchlistController {
     private final WatchlistService watchlistService;
     private final UserService userService;

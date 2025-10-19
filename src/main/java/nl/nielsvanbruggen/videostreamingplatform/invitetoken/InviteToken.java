@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.Role;
 import nl.nielsvanbruggen.videostreamingplatform.user.model.User;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 
@@ -26,6 +28,7 @@ public class InviteToken {
     private Instant createdAt;
     @Enumerated(EnumType.STRING)
     private Role role;
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "created_by")
     @ManyToOne
     private User createdBy;
