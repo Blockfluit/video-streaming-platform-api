@@ -15,6 +15,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Entity
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Table(name = "media")
 public class Media {
     @Id
     @GeneratedValue

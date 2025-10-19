@@ -24,7 +24,7 @@ public class Base64ImageValidator implements ConstraintValidator<IsBase64Image, 
             Base64.getDecoder().decode(parts[1]);
 
             return true;
-        } catch(IllegalArgumentException iae) {
+        } catch(IllegalArgumentException ignored) {
             return false;
         }
     }

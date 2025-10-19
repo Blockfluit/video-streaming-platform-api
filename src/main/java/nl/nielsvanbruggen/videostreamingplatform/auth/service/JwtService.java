@@ -1,29 +1,34 @@
 package nl.nielsvanbruggen.videostreamingplatform.auth.service;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
+import nl.nielsvanbruggen.videostreamingplatform.config.SettingsProperties;
 import nl.nielsvanbruggen.videostreamingplatform.exception.InvalidJwtTokenException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.security.Key;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
-    @Value("${secret-key}")
-    private String jwtSecret;
-    private static final int EXPIRATION_TIME_MILLIS = 1000 * 60 * 5;
+    private final Duration expiration;
+    private final String secret;
+
+    public JwtService(SettingsProperties settingsProperties) {
+        this.expiration = settingsProperties.getJwt().getExpiration();
+        this.secret = settingsProperties.getJwt().getSecret();
+    }
 
     public String extractUsername(String token) throws InvalidJwtTokenException {
         return extractClaim(token, Claims::getSubject);
@@ -42,7 +47,7 @@ public class JwtService {
                         .orElse("")))
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(Date.from(Instant.now()))
-                .setExpiration(Date.from(Instant.now().plus(EXPIRATION_TIME_MILLIS, ChronoUnit.MILLIS)))
+                .setExpiration(Date.from(Instant.now().plus(expiration)))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -79,7 +84,7 @@ public class JwtService {
     }
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

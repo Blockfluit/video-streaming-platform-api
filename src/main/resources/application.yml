@@ -20,19 +20,22 @@ server:
     max-http-form-post-size: ${MAX_HTTP_FORM_POST_SIZE:10MB}
     max-swallow-size: ${MAX_SWALLOW_SIZE:10MB}
 
-secret-key: ${SECRET_KEY}
+settings:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:PT5M}
 
 paths:
   videos:
-    root: ${PATH_VIDEOS_ROOT:./videos}
+    root: ${PATH_VIDEOS_ROOT}
   thumbnail:
-    root: ${PATH_THUMBNAIL_ROOT:./thumbnails}
+    root: ${PATH_THUMBNAIL_ROOT}
   snapshot:
-    root: ${PATH_SNAPSHOT_ROOT:./snapshots}
+    root: ${PATH_SNAPSHOT_ROOT}
   ffmpeg:
-    root: ${FFPROBE_PATH:/usr/bin/ffmpeg}
+    root: ${FFMPEG_PATH:/usr/bin/ffmpeg}
   ffprobe:
-    root: ${FFMPEG_PATH:/usr/bin/ffprobe}
+    root: ${FFPROBE_PATH:/usr/bin/ffprobe}
 
 snapshot:
   width: 600
