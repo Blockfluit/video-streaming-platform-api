@@ -66,6 +66,10 @@ public class MediaService {
                 .map(mediaDTOSimplifiedMapper);
     }
 
+    public boolean existsByName(String name) {
+        return mediaRepository.existsByName(name);
+    }
+
     public Page<Media> getAutocompletion(int pageNumber, int pageSize, String type, List<String> genres, String search, boolean overrideHidden) {
         if(search.isEmpty()) return Page.empty(PageRequest.of(pageNumber, pageSize));
 
