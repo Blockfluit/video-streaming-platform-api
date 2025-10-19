@@ -35,6 +35,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/genres").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/genres").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/media").hasAuthority(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/media/*").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, "/media/*").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/media/*").hasAuthority(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/users").hasAuthority(Role.ADMIN.name())

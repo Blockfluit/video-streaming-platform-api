@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -79,18 +80,26 @@ public class UploadService {
 
     @Transactional
     public void defaultUpload(MediaPostRequest request, User user) {
-        Media media = Media.builder()
+        int releaseYear = request.getYear() != null ?
+                request.getYear() :
+                LocalDate.now().getYear();
+
+        var builder = Media.builder()
                 .name(request.getName())
                 .imdbId(request.getImdbId())
-                .thumbnail(handleThumbnail(request.getThumbnail(), request.getName() + "_" + request.getYear()))
                 .type(request.getType())
                 .createdBy(user)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .hidden(request.isHidden())
                 .plot(request.getPlot())
-                .year(request.getYear())
-                .build();
+                .year(releaseYear);
+
+        if(request.getThumbnail() != null) {
+            builder.thumbnail(handleThumbnail(request.getThumbnail(), request.getName() + "_" + request.getYear()));
+        }
+
+        Media media = builder.build();
 
         mediaRepository.save(media);
 

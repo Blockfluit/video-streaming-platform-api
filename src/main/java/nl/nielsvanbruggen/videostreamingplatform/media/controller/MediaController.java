@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTO;
 import nl.nielsvanbruggen.videostreamingplatform.media.dto.MediaDTOMapper;
 import nl.nielsvanbruggen.videostreamingplatform.media.model.Media;
+import nl.nielsvanbruggen.videostreamingplatform.media.service.IndexService;
 import nl.nielsvanbruggen.videostreamingplatform.media.service.MediaService;
 import nl.nielsvanbruggen.videostreamingplatform.user.service.UserService;
 import org.springframework.data.domain.Page;
@@ -14,14 +15,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/media")
 public class MediaController {
+
+    private static final AtomicBoolean INDEXING = new AtomicBoolean(false);
+
     private final MediaService mediaService;
     private final UserService userService;
     private final MediaDTOMapper mediaDTOMapper;
+    private final IndexService indexService;
 
     @GetMapping("/{id}")
     public ResponseEntity<MediaGetResponse> getMedia(@PathVariable int id) {
@@ -156,5 +162,19 @@ public class MediaController {
     public ResponseEntity<Void> deleteMedia(@PathVariable Long id) {
         mediaService.deleteMedia(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/index-all")
+    public ResponseEntity<Void> indexAll() {
+        if(INDEXING.compareAndSet(false, true)) {
+            new Thread(() -> {
+                indexService.indexAll();
+                INDEXING.set(false);
+            }).start();
+
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.accepted().build();
     }
 }

@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MediaRepository extends JpaRepository<Media, Long> {
+
+    boolean existsByName(String name);
     Optional<Media> findByName(String name);
     Optional<Media> findByImdbId(String imdbId);
 
