@@ -180,6 +180,6 @@ public class VideoService {
     private String parsePath(Path path) {
         return path.toString()
                 .replace("\\", "/")
-                .replace(pathProperties.getVideos().getRoot(), "");
+                .replaceFirst(pathProperties.getVideos().getRoot(), "");
     }
 }
